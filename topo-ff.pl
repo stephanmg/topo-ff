@@ -9,8 +9,9 @@
 #               the VMD plugin 'topotools' with a given CHARMM force field 
 #               and write the completed LAMMPS data to a OUTPUT file.
 #
-#         TODO add improper, angles and dihedrals coefficients/see notes Axel!
-#              ignore lines startign with ! indicating a comment
+#         TODO add improper, fix dihderal matching, see notes from axel (NBFIX)
+#              add masses from the other CHARMM force field file
+#         NOTE: Parameters in CHARMM file cannot be separated by an empty line!
 #      OPTIONS: ---
 # REQUIREMENTS: ---
 #         BUGS: None so far.
@@ -42,200 +43,14 @@ open(my $FH_FF, '<:encoding(UTF-8)', $ff)
 open (my $OUT, '>', $output)
     or die "Could not open file '$output': $!";
 
+open (my $NOTFOUND, '>', 'not_found')
+    or die "Could not open file 'not_found': $!";
+
 my @pairs;
 my @bonds;
 my @angles;
 my @dihedrals;
 my @impropers;
-
-=begin
-while (my $line = <$FH_FF>) {
-    # TODO 5 if statements can be compressed into a for loop over [pairs, bonds, angles, dihedrals, impropers]
-    if ($line =~ /^Pair Coeffs/) {
-        if (my $next_line = <$FH_FF>) {
-            if ($next_line =~ /^$/) {
-                while (my $pair = <$FH_FF>) {
-                    if ($pair =~ /\d+.*#.*/) {
-                        push @pairs, $pair;
-                        } else {
-                        last;
-                    }
-                }
-            }
-        }
-    }
- if ($line =~ /^Bond Coeffs/) {
-        if (my $next_line = <$FH_FF>) {
-            if ($next_line =~ /^$/) {
-                while (my $bond = <$FH_FF>) {
-                    if ($bond =~ /\d+.*#.*/) {
-                        push @bonds, $bond;
-                        } else {
-                        last;
-                    }
-                }
-            }
-        }
-    }
-  if ($line =~ /^Angle Coeffs/) {
-        if (my $next_line = <$FH_FF>) {
-            if ($next_line =~ /^$/) {
-                while (my $angle = <$FH_FF>) {
-                    if ($angle =~ /\d+.*#.*/) {
-                        push @angles, $angle;
-                        } else {
-                        last;
-                    }
-                }
-            }
-        }
-    }
-  if ($line =~ /^Dihedral Coeffs/) {
-        if (my $next_line = <$FH_FF>) {
-            if ($next_line =~ /^$/) {
-                while (my $dihedral = <$FH_FF>) {
-                    if ($dihedral =~ /\d+.*#.*/) {
-                        push @dihedrals, $dihedral;
-                        } else {
-                        last;
-                    }
-                }
-            }
-        }
-    }
- if ($line =~ /^Improper Coeffs/) {
-        if (my $next_line = <$FH_FF>) {
-            if ($next_line =~ /^$/) {
-                while (my $improper = <$FH_FF>) {
-                    if ($improper =~ /\d+.*#.*/) {
-                        push @impropers, $improper;
-                        } else {
-                        last;
-                    }
-                }
-            }
-        }
-    }
-}
-
-sub handle_angle_coeffs {
-    print $OUT "Angle Coeffs\n\n";
-    my $index = 1;
-    while (my $line = <$FH_TOPO>) {
-        if ($line =~ /^#.*/) {
-            chomp($line);
-            $line =~ s/^#.*?(\w+-\w+-\w+)/$1/;
-            my @fromto = split /-/, $line;
-            for my $angle (@angles) {
-                if ($angle =~ /$fromto[0]\s*$fromto[1]\s*$fromto[2]/) {
-                    $angle =~ s/\d+\s*(.*)#.*/$1/;
-                    print $OUT "$index $angle";
-                    $index++;
-                    last; 
-                }
- if ($angle =~ /$fromto[1]\s*$fromto[0]\s*$fromto[2]/) {
-                    $angle =~ s/\d+\s*(.*)#.*/$1/;
-                    print $OUT "$index $angle";
-                    $index++;
-                    last; 
-                }
-
-            }
-        } else {
-            return; 
-        }
-    }
-}
-
-sub handle_dihedral_coeffs {
-    print $OUT "Dihedral Coeffs\n\n";
-    my $index = 1;
-    while (my $line = <$FH_TOPO>) {
-        if ($line =~ /^#.*/) {
-            chomp($line);
-            $line =~ s/^#.*?(\w+-\w+-\w+-\w+)/$1/;
-            my @fromto = split /-/, $line;
-            for my $dihedral (@dihedrals) {
-                if ($dihedral =~ /$fromto[0]\s*$fromto[1]\s*$fromto[2]\s*$fromto[3]/) {
-                    my $OUTput = $dihedral;
-                    $OUTput =~ s/\d+\s*(.*)#.*/$1/;
-                    print $OUT "$index $OUTput";
-                    $index++;
-                    last; 
-                }
-
-               if ($dihedral =~ /$fromto[1]\s*$fromto[0]\s*$fromto[3]\s*$fromto[2]/) {
-                    my $OUTput = $dihedral;
-                    $OUTput  =~ s/\d+\s*(.*)#.*/$1/;
-                    print $OUT "$index $OUTput";
-                    $index++;
-                    last; 
-                }
-
-                if ($dihedral =~ /$fromto[3]\s*$fromto[2]\s*$fromto[1]\s*$fromto[0]/) {
-                    my $OUTput = $dihedral;
-                    $OUTput  =~ s/\d+\s*(.*)#.*/$1/;
-                    print $OUT "$index $OUTput";
-                    $index++;
-                    last; 
-                }
-
-                if ($dihedral =~ /$fromto[2]\s*$fromto[1]\s*$fromto[3]\s*$fromto[0]/) {
-                    my $OUTput = $dihedral;
-                    $OUTput =~ s/\d+\s*(.*)#.*/$1/;
-                    print $OUT "$index $OUTput";
-                    $index++;
-                    last; 
-                }
-            }
-        } else {
-            return; 
-        }
-    }
-}
-
-sub handle_improper_coeffs {
-    print $OUT "Improper Coeffs\n\n";
-    my $index = 1;
-    while (my $line = <$FH_TOPO>) {
-        if ($line =~ /^#.*/) {
-            chomp($line);
-            $line =~ s/^#.*?(\w+-\w+-\w+-\w+)/$1/;
-            my @fromto = split /-/, $line;
-            for my $improper (@impropers) {
-                if ($improper =~ /$fromto[2]\s*$fromto[1]\s*$fromto[3]\s*$fromto[0]/) {
-                    my $OUTput = $improper;
-                    $improper =~ s/\d+\s*(.*)#.*/$1/;
-                    print $OUT "$index $improper";
-                    $index++;
-                    last; 
-                }
-
-                 if ($improper =~ /$fromto[0]\s*$fromto[1]\s*$fromto[2]\s*$fromto[3]/) {
-                    my $OUTput = $improper;
-                    $improper =~ s/\d+\s*(.*)#.*/$1/;
-                    print $OUT "$index $improper";
-                    $index++;
-                    last; 
-                }
-    if ($improper =~ /$fromto[3]\s*$fromto[1]\s*$fromto[0]\s*$fromto[2]/) {
-                    my $OUTput = $improper;
-                    $improper =~ s/\d+\s*(.*)#.*/$1/;
-                    print $OUT "$index $improper";
-                    $index++;
-                    last; 
-                }
-
-
-
-            }
-        } else {
-            return; 
-        }
-    }
-}
-=end
-=cut
 
 sub handle_pair_coefficients {
     print $OUT "Pair Coeffs\n\n";
@@ -307,6 +122,42 @@ sub handle_angle_coefficients {
     }
 }
 
+sub handle_dihedral_coefficients {
+    print $NOTFOUND "Dihedral Coeffs\n\n";
+    print $OUT "Dihedral Coeffs\n\n";
+    my $index = 1;
+    while (my $line = <$FH_TOPO>) {
+        if ($line =~ /^#.*/) {
+            chomp($line);
+            $line =~ s/^#.*?(\w+-\w+-\w+-\w+)/$1/;
+            my @fromto = split /-/, $line;
+            my $found = 0;
+            for my $dihedral (@dihedrals) {
+
+                if ($dihedral =~ /$fromto[3]\s*$fromto[2]\s*$fromto[1]\s*$fromto[0]/) {
+                    my @output = ($dihedral=~ /(\d+\.\d+)/g);
+                    print $OUT "$index $dihedral # $line \n";
+                    $index++;
+                    $found = 1;
+                    last; 
+                }
+
+                 if ($dihedral =~ /$fromto[0]\s*$fromto[1]\s*$fromto[2]\s*$fromto[3]/) {
+                    my @output = ($dihedral=~ /(\d+\.\d+)/g);
+                    print $OUT "$index $dihedral # $line \n";
+                    $index++;
+                    $found = 1;
+                    last; 
+                }
+            }
+            if ($found == 0) {
+                print $NOTFOUND "Line: $line\n";
+            }
+        } else {
+            return; 
+        }
+    }
+}
 
 
 
@@ -317,7 +168,7 @@ sub read_coefficients {
         if (/^\s*$/) { # empty line marks end of given type section
             last;
         } else {
-            if (! (/^!/ || /^\s+!/) ) {
+            if (! (/^!/ || /^\s+!/) ) { # comment line
                 push @$type, $_;
             }
         }
@@ -326,7 +177,8 @@ sub read_coefficients {
 
 my %types = ( "BONDS"     => \@bonds,
               "NONBONDED" => \@pairs,
-              "ANGLES"    => \@angles
+              "ANGLES"    => \@angles,
+              "DIHEDRALS" => \@dihedrals
             );
 
 for my $type (keys %types) {
@@ -346,6 +198,9 @@ print scalar @pairs;
 print " ";
 print "Angles: ";
 print scalar @angles;
+print " ";
+print "Dihedrals: ";
+print scalar @dihedrals;
 
 while (my $line = <$FH_TOPO>) {
     if ($line =~ /^# Pair Coeffs/) {
@@ -369,6 +224,14 @@ while (my $line = <$FH_TOPO>) {
             if ($next_line =~ /^#$/) {
                 print $OUT "\n";
                 handle_angle_coefficients();
+                print $OUT "\n";
+            }
+        }
+    } elsif ($line =~ /^# Dihedral Coeffs/) { 
+         if (my $next_line = <$FH_TOPO>) {
+            if ($next_line =~ /^#$/) {
+                print $OUT "\n";
+                handle_dihedral_coefficients();
                 print $OUT "\n";
             }
         }
