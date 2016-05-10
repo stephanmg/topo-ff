@@ -6,11 +6,12 @@
 #        USAGE: ./topo-ff.pl  TOPOLOGY CHARMM OUTPUT
 #
 #  DESCRIPTION: Parametrize the TOPOLOGY file for LAMMPS generated with 
-#               the VMD plugin 'topotools' with a given CHARMM force field 
-#               and write the completed LAMMPS data to a OUTPUT file.
+#               the VMD plugin 'topotools' with a given CHARMM force field,
+#               i.e. use the provided CHARMM topology and parameter file,
+#               then write the completed LAMMPS data to a OUTPUT file.
 #
 #         TODO add improper, fix dihderal matching, see notes from axel (NBFIX)
-#              add masses from the other CHARMM force field file
+#              add masses from the CHARMM topology file
 #         NOTE: Parameters in CHARMM file cannot be separated by an empty line!
 #      OPTIONS: ---
 # REQUIREMENTS: ---
@@ -23,13 +24,16 @@
 #     REVISION: cf. git log 
 #===============================================================================
 
+# pragmas
 use utf8;
 use strict;
 use warnings;
 
+# consistency check
 my $num_args = $#ARGV + 1;
 die("Usage: topo-ff.pl TOPOLOGY CHARMM OUTPUT\n") if $num_args != 3;
 
+# files
 my $topo = $ARGV[0];
 my $ff  = $ARGV[1];
 my $output = $ARGV[2];
@@ -46,6 +50,8 @@ open (my $OUT, '>', $output)
 open (my $NOTFOUND, '>', 'not_found')
     or die "Could not open file 'not_found': $!";
 
+# coefficients
+my @masses;
 my @pairs;
 my @bonds;
 my @angles;
@@ -159,7 +165,9 @@ sub handle_dihedral_coefficients {
     }
 }
 
-
+sub handle_improper_coefficients {
+    
+}
 
 sub read_coefficients {
     my $type = shift;
@@ -175,10 +183,12 @@ sub read_coefficients {
     }
 }
 
+
 my %types = ( "BONDS"     => \@bonds,
               "NONBONDED" => \@pairs,
               "ANGLES"    => \@angles,
-              "DIHEDRALS" => \@dihedrals
+              "DIHEDRALS" => \@dihedrals,
+              "IMPROPERS" => \@impropers
             );
 
 for my $type (keys %types) {
@@ -190,6 +200,9 @@ for my $type (keys %types) {
     }
 }
 
+print "Masses: ";
+print scalar @masses;
+print " ";
 print "Bonds: ";
 print scalar @bonds;
 print " ";
@@ -201,6 +214,10 @@ print scalar @angles;
 print " ";
 print "Dihedrals: ";
 print scalar @dihedrals;
+print " ";
+print "Impropers: ";
+print scalar @impropers;
+print "\n";
 
 while (my $line = <$FH_TOPO>) {
     if ($line =~ /^# Pair Coeffs/) {
