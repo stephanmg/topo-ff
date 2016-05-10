@@ -1,4 +1,4 @@
-#!/usr/bin/env perl -w
+#!/usr/bin/env perl 
 #===============================================================================
 #
 #         FILE: topo-ff.pl
@@ -10,6 +10,7 @@
 #               and write the completed LAMMPS data to a OUTPUT file.
 #
 #         TODO add improper, angles and dihedrals coefficients/see notes Axel!
+#              ignore lines startign with ! indicating a comment
 #      OPTIONS: ---
 # REQUIREMENTS: ---
 #         BUGS: None so far.
@@ -269,11 +270,9 @@ sub handle_bond_coefficients {
             $line =~ s/^#.*?(\w+-\w+)/$1/;
             my @fromto = split /-/, $line;
             for my $bond (@bonds) {
-                print "Bond: $bond\n";
-                print "Line: $line\n";
                 if ($bond =~ /^$fromto[1]\s+$fromto[0]/) {
-                    my $output = $bond;
-                    print $OUT "$index $output # $line\n";
+                    my @output = ($bond =~ /(\d+\.\d+)/g);
+                    print $OUT "$index @output # $line\n";
                     $index++;
                     last; # break OUT of loop if duplicated bond coefficients are specified, take the first definition (all are equivalent)
                 }
@@ -285,6 +284,32 @@ sub handle_bond_coefficients {
     }
 }
 
+sub handle_angle_coefficients {
+    print $OUT "Angle Coeffs\n\n";
+    my $index = 1;
+    while (my $line = <$FH_TOPO>) {
+        if ($line =~ /^#.*/) {
+            chomp($line);
+            $line =~ s/^#.*?(\w+-\w+-\w+)/$1/;
+            my @fromto = split /-/, $line;
+            for my $angle (@angles) {
+                 if ($angle =~ /$fromto[2]\s*$fromto[1]\s*$fromto[0]/) {
+                    my @output = ($angle =~ /(\d+\.\d+)/g);
+                    print $OUT "$index @output # $line\n";
+                    $index++;
+                    last; 
+                }
+
+            }
+        } else {
+            return; 
+        }
+    }
+}
+
+
+
+
 sub read_coefficients {
     my $type = shift;
     while (<$FH_FF>) {
@@ -292,13 +317,16 @@ sub read_coefficients {
         if (/^\s*$/) { # empty line marks end of given type section
             last;
         } else {
-            push @$type, $_;
+            if (! (/^!/ || /^\s+!/) ) {
+                push @$type, $_;
+            }
         }
     }
 }
 
-my %types = ( "BONDS" => \@bonds,
-              "NONBONDED" => \@pairs
+my %types = ( "BONDS"     => \@bonds,
+              "NONBONDED" => \@pairs,
+              "ANGLES"    => \@angles
             );
 
 for my $type (keys %types) {
@@ -315,8 +343,9 @@ print scalar @bonds;
 print " ";
 print "Pairs: ";
 print scalar @pairs;
-
-
+print " ";
+print "Angles: ";
+print scalar @angles;
 
 while (my $line = <$FH_TOPO>) {
     if ($line =~ /^# Pair Coeffs/) {
@@ -332,6 +361,14 @@ while (my $line = <$FH_TOPO>) {
             if ($next_line =~ /^#$/) {
                 print $OUT "\n";
                 handle_bond_coefficients();
+                print $OUT "\n";
+            }
+        }
+    } elsif ($line =~ /^# Angle Coeffs/) { 
+        if (my $next_line = <$FH_TOPO>) {
+            if ($next_line =~ /^#$/) {
+                print $OUT "\n";
+                handle_angle_coefficients();
                 print $OUT "\n";
             }
         }
