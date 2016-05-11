@@ -12,12 +12,12 @@
 #
 #         TODO - see Axel's notes:
 #                a) dihedral weighting (last parameter, aka LJ 1-4 scaling
-#                   this is set to 0, but needs to be computed accordingly!)
+#                   this is set to 0, but needs to be computed accordingly)
 #                b) NBFIX 
-#                c) WATER for LAMMPS 
+#                c) WATER for LAMMPS (special)
 #
 #              - write input script for LAMMPS too
-#              - correct bounding box cordinates
+#              - correct bounding box coordinates
 #
 #              - comment doxygen alike file
 #              - perl test cases
@@ -32,6 +32,7 @@
 #               - When using topotools then you need to retypebonds,
 #                 retypeangles, retypedihedrals and retypeimpropers,
 #                 then write the LAMMPS data with writelammpsdata.
+#               - LAMMPS currently cannot use CMAP corrections from FFs.
 #               
 # REQUIREMENTS: Perl v5.000
 #         BUGS: --
