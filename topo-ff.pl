@@ -11,12 +11,14 @@
 #               then write the completed LAMMPS data to a OUTPUT file.
 #
 #         TODO - see Axel's notes:
-#                a) NBFIX 
-#                b) WATER for LAMMPS 
-#                c) dihedral weighting (last parameter, aka LJ 1-4 scaling
+#                a) dihedral weighting (last parameter, aka LJ 1-4 scaling
 #                   this is set to 0, but needs to be computed accordingly!)
+#                b) NBFIX 
+#                c) WATER for LAMMPS 
 #
 #              - write input script for LAMMPS too
+#              - correct bounding box cordinates
+#
 #              - comment doxygen alike file
 #              - perl test cases
 #              - pretty print statistics or discard
