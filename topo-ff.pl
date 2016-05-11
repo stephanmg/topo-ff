@@ -10,9 +10,12 @@
 #               i.e. use the provided CHARMM topology and parameter file,
 #               then write the completed LAMMPS data to a OUTPUT file.
 #
-#         TODO add improper, fix dihderal matching, see notes from axel (NBFIX)
-#              add masses from the CHARMM topology file
-#         NOTE: Parameters in CHARMM file cannot be separated by an empty line!
+#         TODO - add improper
+#              - see Axel's notes: NBFIX and water!
+#
+#        NOTES: Parameters in CHARMM file cannot be separated by empty lines,
+#               they have the meaning to separate the different sections.
+#               
 #      OPTIONS: ---
 # REQUIREMENTS: ---
 #         BUGS: None so far.
@@ -59,11 +62,13 @@ my @dihedrals;
 my @impropers;
 
 sub handle_pair_coefficients {
+    print $NOTFOUND "Pair Coeffs\n\n";
     print $OUT "Pair Coeffs\n\n";
     my $index = 1;
     while (my $line = <$FH_TOPO>) {
         if ($line =~ /^#.*/) {
             $line =~ s/^#\s*\d+\s*(\w+)/$1/;
+            my $found = 0;
             for my $pair (@pairs) {
                 chomp($line);
                 chomp($pair);    
@@ -73,8 +78,12 @@ sub handle_pair_coefficients {
                     my $val2 = 2.0*($output[2]*2.0**(-1/6));
                     print $OUT "$index $val1 $val2 $val1 $val2 # $line\n";
                     $index++;
+                    $found = 1;
                     last;
                 }
+            }
+            if ($found == 0) {
+                print $NOTFOUND $line;
             }
         } else {
             return;
@@ -83,6 +92,7 @@ sub handle_pair_coefficients {
 }
 
 sub handle_bond_coefficients {
+    print $NOTFOUND "Bond Coeffs\n\n";
     print $OUT "Bond Coeffs\n\n";
     my $index = 1;
     while (my $line = <$FH_TOPO>) {
@@ -90,15 +100,19 @@ sub handle_bond_coefficients {
             chomp($line);
             $line =~ s/^#.*?(\w+-\w+)/$1/;
             my @fromto = split /-/, $line;
+            my $found = 0;
             for my $bond (@bonds) {
                 if ($bond =~ /^$fromto[1]\s+$fromto[0]/) {
                     my @output = ($bond =~ /(\d+\.\d+)/g);
                     print $OUT "$index @output # $line\n";
                     $index++;
+                    $found = 1;
                     last; # break OUT of loop if duplicated bond coefficients are specified, take the first definition (all are equivalent)
                 }
             }
-            
+            if ($found == 0) {
+                print $NOTFOUND "Line: $line\n";
+            }
         } else {
             return; 
         }
@@ -107,20 +121,25 @@ sub handle_bond_coefficients {
 
 sub handle_angle_coefficients {
     print $OUT "Angle Coeffs\n\n";
+    print $NOTFOUND "Angle Coeffs\n\n";
     my $index = 1;
     while (my $line = <$FH_TOPO>) {
         if ($line =~ /^#.*/) {
             chomp($line);
             $line =~ s/^#.*?(\w+-\w+-\w+)/$1/;
             my @fromto = split /-/, $line;
+            my $found = 0;
             for my $angle (@angles) {
                  if ($angle =~ /$fromto[2]\s*$fromto[1]\s*$fromto[0]/) {
                     my @output = ($angle =~ /(\d+\.\d+)/g);
                     print $OUT "$index @output # $line\n";
+                    $found = 1;
                     $index++;
                     last; 
                 }
-
+            }
+            if ($found == 0) {
+                print $NOTFOUND "Line: $line\n";
             }
         } else {
             return; 
@@ -141,23 +160,47 @@ sub handle_dihedral_coefficients {
             for my $dihedral (@dihedrals) {
 
                 if ($dihedral =~ /$fromto[3]\s*$fromto[2]\s*$fromto[1]\s*$fromto[0]/) {
-                    my @output = ($dihedral=~ /(\d+\.\d+)/g);
-                    print $OUT "$index $dihedral # $line \n";
+                    my @output = ($dihedral=~ /(\d+\.\d+)\s*(\d+)\s*(\d+\.\d+)/);
+                    print $OUT "$index @output # $line \n";
                     $index++;
                     $found = 1;
                     last; 
                 }
 
                  if ($dihedral =~ /$fromto[0]\s*$fromto[1]\s*$fromto[2]\s*$fromto[3]/) {
-                    my @output = ($dihedral=~ /(\d+\.\d+)/g);
-                    print $OUT "$index $dihedral # $line \n";
+                    my @output = ($dihedral=~ /(\d+\.\d+)\s*(\d+)\s*(\d+\.\d+)/);
+                    print $OUT "$index @output # $line \n";
                     $index++;
                     $found = 1;
                     last; 
                 }
             }
+
+            # try wildcard match
             if ($found == 0) {
-                print $NOTFOUND "Line: $line\n";
+                for my $dihedral (@dihedrals) {
+                    if ($dihedral =~ /X\s*$fromto[1]\s*$fromto[2]\s*X/) {
+                        my @output = ($dihedral=~ /(\d+\.\d+)\s*(\d+)\s*(\d+\.\d+)/);
+                        print $OUT "$index @output # $line \n";
+                        $index++;
+                        $found = 1;
+                        last; 
+                    }
+
+                    if ($dihedral =~ /X\s*$fromto[2]\s*$fromto[1]\s*X/) {
+                        print "Match!\n";
+                        my @output = ($dihedral=~ /(\d+\.\d+)\s*(\d+)\s*(\d+\.\d+)/);
+                        print $OUT "$index @output # $line \n";
+                        $index++;
+                        $found = 1;
+                        last; 
+                    }
+                }
+
+                # no success - need manual fix
+                if ($found == 0) {
+                    print $NOTFOUND "Line: $line\n";
+                }
             }
         } else {
             return; 
@@ -256,3 +299,5 @@ while (my $line = <$FH_TOPO>) {
         print $OUT $line;
     }
 }
+
+#print join "\n", @dihedrals;
