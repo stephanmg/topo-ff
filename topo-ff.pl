@@ -228,7 +228,8 @@ sub handle_improper_coefficients {
             for my $improper (@impropers) {
                 if ($improper =~ /$fromto[0]\s*$fromto[1]\s*$fromto[2]\s*$fromto[3]/) {
                      my @output = ($improper =~ /(\d+\.\d+)\s*(\d+)\s*(\d+\.\d+)/);
-                     print $OUT "$index @output # $line \n";
+                     # second column is ignored, see CHARMM parameter file
+                     print $OUT "$index $output[0] $output[2] # $line \n"; 
                      $index++;
                      $found = 1;
                      last; 
@@ -236,7 +237,7 @@ sub handle_improper_coefficients {
 
                 if ($improper =~ /$fromto[3]\s*$fromto[2]\s*$fromto[1]\s*$fromto[0]/) {
                      my @output = ($improper =~ /(\d+\.\d+)\s*(\d+)\s*(\d+\.\d+)/);
-                     print $OUT "$index @output # $line \n";
+                     print $OUT "$index $output[0] $output[2] # $line \n";
                      $index++;
                      $found = 1;
                      last; 
@@ -248,7 +249,7 @@ sub handle_improper_coefficients {
                for my $improper (@impropers) {
                   if ($improper =~ /X\s*$fromto[1]\s*$fromto[2]\s*X/) {
                      my @output = ($improper=~ /(\d+\.\d+)\s*(\d+)\s*(\d+\.\d+)/);
-                     print $OUT "$index @output # $line \n";
+                     print $OUT "$index $output[0] $output[2] # $line \n";
                      $index++;
                      $found = 1;
                      last; 
@@ -256,7 +257,7 @@ sub handle_improper_coefficients {
 
                  if ($improper =~ /X\s*$fromto[2]\s*$fromto[1]\s*X/) {
                      my @output = ($improper=~ /(\d+\.\d+)\s*(\d+)\s*(\d+\.\d+)/);
-                     print $OUT "$index @output # $line \n";
+                     print $OUT "$index $output[0] $output[2] # $line \n";
                      $index++;
                      $found = 1;
                      last; 
@@ -264,7 +265,7 @@ sub handle_improper_coefficients {
 
                  if ($improper =~ /$fromto[3]\s*X\s*X\s*$fromto[0]/) {
                      my @output = ($improper =~ /(\d+\.\d+)\s*(\d+)\s*(\d+\.\d+)/);
-                     print $OUT "$index @output # $line \n";
+                     print $OUT "$index $output[0] $output[2] # $line \n";
                      $index++;
                      $found = 1;
                      last; 
