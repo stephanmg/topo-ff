@@ -18,25 +18,29 @@
 #              - comment doxygen alike file
 #              - perl test cases
 #              - pretty print statistics or discard
+#              - CLI interface
 #
 #        NOTES: - Parameters in CHARMM file cannot be separated by empty lines,
 #               they have the meaning to separate the different sections.
 #               - When generating a PSF/PDB file pair with VMD for instance,
 #                 the provided topology file (CHARMM) should match the 
 #                 provided parameter file (CHARMM) when using topo-ff.
+#               - When using topotools then you need to retypebonds,
+#                 retypeangles, retypedihedrals and retypeimpropers,
+#                 then write the LAMMPS data with writelammpsdata.
 #               
-#      OPTIONS: ---
-# REQUIREMENTS: ---
-#         BUGS: None so far.
+# REQUIREMENTS: Perl v5.000
+#         BUGS: --
 #        NOTES: In case of any questions send me an email.
 #       AUTHOR: Stephan Grein (grein@temple.edu)
 # ORGANIZATION: Temple University
 #      VERSION: 1.0
 #      CREATED: 05/03/16 15:51:36
-#     REVISION: cf. git log 
+#     REVISION: git rev-parse HEAD
 #===============================================================================
 
 # pragmas
+use 5.000;
 use utf8;
 use strict;
 use warnings;
