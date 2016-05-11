@@ -19,8 +19,11 @@
 #              - perl test cases
 #              - pretty print statistics or discard
 #
-#        NOTES: Parameters in CHARMM file cannot be separated by empty lines,
+#        NOTES: - Parameters in CHARMM file cannot be separated by empty lines,
 #               they have the meaning to separate the different sections.
+#               - When generating a PSF/PDB file pair with VMD for instance,
+#                 the provided topology file (CHARMM) should match the 
+#                 provided parameter file (CHARMM) when using topo-ff.
 #               
 #      OPTIONS: ---
 # REQUIREMENTS: ---
