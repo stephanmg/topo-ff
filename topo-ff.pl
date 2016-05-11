@@ -188,7 +188,6 @@ sub handle_dihedral_coefficients {
                     }
 
                     if ($dihedral =~ /X\s*$fromto[2]\s*$fromto[1]\s*X/) {
-                        print "Match!\n";
                         my @output = ($dihedral=~ /(\d+\.\d+)\s*(\d+)\s*(\d+\.\d+)/);
                         print $OUT "$index @output # $line \n";
                         $index++;
