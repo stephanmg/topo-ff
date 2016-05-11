@@ -10,8 +10,7 @@
 #               i.e. use the provided CHARMM topology and parameter file,
 #               then write the completed LAMMPS data to a OUTPUT file.
 #
-#         TODO - add improper
-#              - see Axel's notes: NBFIX and water!
+#         TODO - see Axel's notes: a) NBFIX and b) WATER for LAMMPS
 #
 #        NOTES: Parameters in CHARMM file cannot be separated by empty lines,
 #               they have the meaning to separate the different sections.
@@ -54,7 +53,6 @@ open (my $NOTFOUND, '>', 'not_found')
     or die "Could not open file 'not_found': $!";
 
 # coefficients
-my @masses;
 my @pairs;
 my @bonds;
 my @angles;
@@ -208,7 +206,75 @@ sub handle_dihedral_coefficients {
 }
 
 sub handle_improper_coefficients {
-    
+    print $OUT "Improper Coeffs\n\n";
+    print $NOTFOUND "Improper Coeffs\n\n";
+    my $index = 1;
+    while (my $line = <$FH_TOPO>) {
+        if ($line =~ /^#.*/) {
+            chomp($line);
+            $line =~ s/^#.*?(\w+-\w+-\w+-\w+)/$1/;
+            my @fromto = split /-/, $line;
+            my $found = 0;
+            for my $improper (@impropers) {
+                if ($improper =~ /$fromto[0]\s*$fromto[1]\s*$fromto[2]\s*$fromto[3]/) {
+                     my @output = ($improper =~ /(\d+\.\d+)\s*(\d+)\s*(\d+\.\d+)/);
+                     print $OUT "$index @output # $line \n";
+                     $index++;
+                     $found = 1;
+                     last; 
+                }
+
+                if ($improper =~ /$fromto[3]\s*$fromto[2]\s*$fromto[1]\s*$fromto[0]/) {
+                     my @output = ($improper =~ /(\d+\.\d+)\s*(\d+)\s*(\d+\.\d+)/);
+                     print $OUT "$index @output # $line \n";
+                     $index++;
+                     $found = 1;
+                     last; 
+                }
+            }
+
+            # try wildcard match
+            if ($found == 0) {
+               for my $improper (@impropers) {
+                  if ($improper =~ /X\s*$fromto[1]\s*$fromto[2]\s*X/) {
+                     my @output = ($improper=~ /(\d+\.\d+)\s*(\d+)\s*(\d+\.\d+)/);
+                     print $OUT "$index @output # $line \n";
+                     $index++;
+                     $found = 1;
+                     last; 
+                  }
+
+                 if ($improper =~ /X\s*$fromto[2]\s*$fromto[1]\s*X/) {
+                     my @output = ($improper=~ /(\d+\.\d+)\s*(\d+)\s*(\d+\.\d+)/);
+                     print $OUT "$index @output # $line \n";
+                     $index++;
+                     $found = 1;
+                     last; 
+                 }
+
+                 if ($improper =~ /$fromto[3]\s*X\s*X\s*$fromto[0]/) {
+                     my @output = ($improper =~ /(\d+\.\d+)\s*(\d+)\s*(\d+\.\d+)/);
+                     print $OUT "$index @output # $line \n";
+                     $index++;
+                     $found = 1;
+                     last; 
+                }
+
+                 if ($improper =~ /$fromto[0]\s*X\s*X\s*$fromto[3]/) {
+                     my @output = ($improper =~ /(\d+\.\d+)\s*(\d+)\s*(\d+\.\d+)/);
+                     print $OUT "$index @output # $line \n";
+                     $index++;
+                     $found = 1;
+                     last; 
+                }
+           }
+        }
+             # no success - need manual fix
+             if ($found == 0) {
+                 print $NOTFOUND "Line: $line\n";
+             }
+        }
+    }
 }
 
 sub read_coefficients {
@@ -230,7 +296,7 @@ my %types = ( "BONDS"     => \@bonds,
               "NONBONDED" => \@pairs,
               "ANGLES"    => \@angles,
               "DIHEDRALS" => \@dihedrals,
-              "IMPROPERS" => \@impropers
+              "IMPROPER" => \@impropers
             );
 
 for my $type (keys %types) {
@@ -242,9 +308,6 @@ for my $type (keys %types) {
     }
 }
 
-print "Masses: ";
-print scalar @masses;
-print " ";
 print "Bonds: ";
 print scalar @bonds;
 print " ";
@@ -291,6 +354,14 @@ while (my $line = <$FH_TOPO>) {
             if ($next_line =~ /^#$/) {
                 print $OUT "\n";
                 handle_dihedral_coefficients();
+                print $OUT "\n";
+            }
+        }
+    } elsif ($line =~ /^# Improper Coeffs/) { 
+         if (my $next_line = <$FH_TOPO>) {
+            if ($next_line =~ /^#$/) {
+                print $OUT "\n";
+                handle_improper_coefficients();
                 print $OUT "\n";
             }
         }
