@@ -10,9 +10,12 @@
 #               i.e. use the provided CHARMM topology and parameter file,
 #               then write the completed LAMMPS data to a OUTPUT file.
 #
-#         TODO - fix dihedrals last parameter mandatory (aka LJ-1-4 scaling)
-#              - see Axel's notes: a) NBFIX and b) WATER for LAMMPS
-#              - comment doxygen alike
+#         TODO - see Axel's notes:
+#                a) NBFIX 
+#                b) WATER for LAMMPS 
+#                c) dihedral weighting (last parameter, aka LJ 1-4 scaling)
+#
+#              - comment doxygen alike file
 #              - perl test cases
 #
 #        NOTES: Parameters in CHARMM file cannot be separated by empty lines,
@@ -156,7 +159,7 @@ sub handle_angle_coefficients {
 sub handle_dihedral_coefficients {
     print $NOTFOUND "Dihedral Coeffs\n\n";
     print $OUT "Dihedral Coeffs\n\n";
-    my $weighting = 0; # for now no L-J 1-4 weighting, see TODO
+    my $weighting = 0; # for now no LJ 1-4 weighting, see TODO
     my $index = 1;
     while (my $line = <$FH_TOPO>) {
         if ($line =~ /^#.*/) {
