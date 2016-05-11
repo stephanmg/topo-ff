@@ -10,7 +10,10 @@
 #               i.e. use the provided CHARMM topology and parameter file,
 #               then write the completed LAMMPS data to a OUTPUT file.
 #
-#         TODO - see Axel's notes: a) NBFIX and b) WATER for LAMMPS
+#         TODO - fix dihedrals last parameter mandatory (aka LJ-1-4 scaling)
+#              - see Axel's notes: a) NBFIX and b) WATER for LAMMPS
+#              - comment doxygen alike
+#              - perl test cases
 #
 #        NOTES: Parameters in CHARMM file cannot be separated by empty lines,
 #               they have the meaning to separate the different sections.
@@ -42,13 +45,10 @@ my $output = $ARGV[2];
 
 open(my $FH_TOPO, '<:encoding(UTF-8)', $topo)
   or die "Could not open file '$topo': $!";
-
 open(my $FH_FF, '<:encoding(UTF-8)', $ff)
   or die "Could not open file '$ff': $!";
-
 open (my $OUT, '>', $output)
     or die "Could not open file '$output': $!";
-
 open (my $NOTFOUND, '>', 'not_found')
     or die "Could not open file 'not_found': $!";
 
@@ -59,6 +59,7 @@ my @angles;
 my @dihedrals;
 my @impropers;
 
+# handle pair coefficients
 sub handle_pair_coefficients {
     print $NOTFOUND "Pair Coeffs\n\n";
     print $OUT "Pair Coeffs\n\n";
@@ -89,6 +90,7 @@ sub handle_pair_coefficients {
     }
 }
 
+# handle bond coefficients
 sub handle_bond_coefficients {
     print $NOTFOUND "Bond Coeffs\n\n";
     print $OUT "Bond Coeffs\n\n";
@@ -105,7 +107,7 @@ sub handle_bond_coefficients {
                     print $OUT "$index @output # $line\n";
                     $index++;
                     $found = 1;
-                    last; # break OUT of loop if duplicated bond coefficients are specified, take the first definition (all are equivalent)
+                    last; # break OUT of loop if duplicated bond coefficients are specified, take the first definition 
                 }
             }
             if ($found == 0) {
@@ -117,6 +119,7 @@ sub handle_bond_coefficients {
     }
 }
 
+# handle angle coefficients
 sub handle_angle_coefficients {
     print $OUT "Angle Coeffs\n\n";
     print $NOTFOUND "Angle Coeffs\n\n";
@@ -130,7 +133,11 @@ sub handle_angle_coefficients {
             for my $angle (@angles) {
                  if ($angle =~ /$fromto[2]\s*$fromto[1]\s*$fromto[0]/) {
                     my @output = ($angle =~ /(\d+\.\d+)/g);
-                    print $OUT "$index @output # $line\n";
+                    if ($#output+1 == 2) {
+                       print $OUT "$index @output 0.0 0.0 # $line\n";
+                    } else { # Urey-Bradley term
+                       print $OUT "$index @output # $line\n";
+                    }
                     $found = 1;
                     $index++;
                     last; 
@@ -145,9 +152,11 @@ sub handle_angle_coefficients {
     }
 }
 
+# handle dihedral coefficients
 sub handle_dihedral_coefficients {
     print $NOTFOUND "Dihedral Coeffs\n\n";
     print $OUT "Dihedral Coeffs\n\n";
+    my $weighting = 0; # for now no L-J 1-4 weighting, see TODO
     my $index = 1;
     while (my $line = <$FH_TOPO>) {
         if ($line =~ /^#.*/) {
@@ -159,7 +168,7 @@ sub handle_dihedral_coefficients {
 
                 if ($dihedral =~ /$fromto[3]\s*$fromto[2]\s*$fromto[1]\s*$fromto[0]/) {
                     my @output = ($dihedral=~ /(\d+\.\d+)\s*(\d+)\s*(\d+\.\d+)/);
-                    print $OUT "$index @output # $line \n";
+                    print $OUT "$index @output $weighting # $line \n";
                     $index++;
                     $found = 1;
                     last; 
@@ -167,7 +176,7 @@ sub handle_dihedral_coefficients {
 
                  if ($dihedral =~ /$fromto[0]\s*$fromto[1]\s*$fromto[2]\s*$fromto[3]/) {
                     my @output = ($dihedral=~ /(\d+\.\d+)\s*(\d+)\s*(\d+\.\d+)/);
-                    print $OUT "$index @output # $line \n";
+                    print $OUT "$index @output $weighting # $line \n";
                     $index++;
                     $found = 1;
                     last; 
@@ -179,7 +188,7 @@ sub handle_dihedral_coefficients {
                 for my $dihedral (@dihedrals) {
                     if ($dihedral =~ /X\s*$fromto[1]\s*$fromto[2]\s*X/) {
                         my @output = ($dihedral=~ /(\d+\.\d+)\s*(\d+)\s*(\d+\.\d+)/);
-                        print $OUT "$index @output # $line \n";
+                        print $OUT "$index @output $weighting # $line \n";
                         $index++;
                         $found = 1;
                         last; 
@@ -187,7 +196,7 @@ sub handle_dihedral_coefficients {
 
                     if ($dihedral =~ /X\s*$fromto[2]\s*$fromto[1]\s*X/) {
                         my @output = ($dihedral=~ /(\d+\.\d+)\s*(\d+)\s*(\d+\.\d+)/);
-                        print $OUT "$index @output # $line \n";
+                        print $OUT "$index @output $weighting # $line \n";
                         $index++;
                         $found = 1;
                         last; 
@@ -205,6 +214,7 @@ sub handle_dihedral_coefficients {
     }
 }
 
+# handle improper coefficients
 sub handle_improper_coefficients {
     print $OUT "Improper Coeffs\n\n";
     print $NOTFOUND "Improper Coeffs\n\n";
@@ -277,6 +287,7 @@ sub handle_improper_coefficients {
     }
 }
 
+# helper method to read coefficients for each type
 sub read_coefficients {
     my $type = shift;
     while (<$FH_FF>) {
@@ -291,7 +302,7 @@ sub read_coefficients {
     }
 }
 
-
+# sections in CHARMM param file
 my %types = ( "BONDS"     => \@bonds,
               "NONBONDED" => \@pairs,
               "ANGLES"    => \@angles,
@@ -299,6 +310,7 @@ my %types = ( "BONDS"     => \@bonds,
               "IMPROPER" => \@impropers
             );
 
+# read in all coefficients from CHARMM param file
 for my $type (keys %types) {
     seek $FH_FF, 0, 0;
     while (my $line = <$FH_FF>) {
@@ -308,22 +320,20 @@ for my $type (keys %types) {
     }
 }
 
+# internal statistics (coefficients from provided CHARMM param file)
 print "Bonds: ";
-print scalar @bonds;
-print " ";
+print scalar @bonds . "\n";
 print "Pairs: ";
-print scalar @pairs;
-print " ";
+print scalar @pairs . "\n";
 print "Angles: ";
-print scalar @angles;
-print " ";
+print scalar @angles . "\n";
 print "Dihedrals: ";
-print scalar @dihedrals;
-print " ";
+print scalar @dihedrals . "\n";
 print "Impropers: ";
-print scalar @impropers;
-print "\n";
+print scalar @impropers . "\n";
 
+
+# parameterize the TOPOLOGY with CHARMM ff coefficients
 while (my $line = <$FH_TOPO>) {
     if ($line =~ /^# Pair Coeffs/) {
         if (my $next_line = <$FH_TOPO>) {
@@ -369,5 +379,3 @@ while (my $line = <$FH_TOPO>) {
         print $OUT $line;
     }
 }
-
-#print join "\n", @dihedrals;
