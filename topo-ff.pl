@@ -17,6 +17,7 @@
 #
 #              - comment doxygen alike file
 #              - perl test cases
+#              - pretty print statistics or discard
 #
 #        NOTES: Parameters in CHARMM file cannot be separated by empty lines,
 #               they have the meaning to separate the different sections.
@@ -325,30 +326,33 @@ for my $type (keys %types) {
 }
 
 # internal statistics (coefficients from provided CHARMM param file)
-print "Bonds: ";
-print scalar @bonds . "\n";
-print "Pairs: ";
-print scalar @pairs . "\n";
-print "Angles: ";
-print scalar @angles . "\n";
-print "Dihedrals: ";
-print scalar @dihedrals . "\n";
-print "Impropers: ";
-print scalar @impropers . "\n";
+print "****************************\n";
+print "*** \tBonds: ";
+print scalar @bonds . "\t ***\n";
+print "*** \tPairs: ";
+print scalar @pairs . "\t *** \n";
+print "*** \tAngles: ";
+print scalar @angles . "\t *** \n";
+print "*** \tDihedrals: ";
+print scalar @dihedrals . "\t *** \n";
+print "*** \tImpropers: ";
+print scalar @impropers . "\t *** \n";
+print "****************************\n";
 
 
 # parameterize the TOPOLOGY with CHARMM ff coefficients
 while (my $line = <$FH_TOPO>) {
+    my $next_line;
     if ($line =~ /^# Pair Coeffs/) {
-        if (my $next_line = <$FH_TOPO>) {
-            if ($next_line =~ /^#$/) {
+        if (defined ($next_line = <$FH_TOPO>)) {
+           if ($next_line =~ /^#$/) {
                 print $OUT "\n";
                 handle_pair_coefficients();
                 print $OUT "\n";
-            }
+           }
         }
     } elsif ($line =~ /^# Bond Coeffs/) {
-        if (my $next_line = <$FH_TOPO>) {
+        if (defined($next_line = <$FH_TOPO>)) {
             if ($next_line =~ /^#$/) {
                 print $OUT "\n";
                 handle_bond_coefficients();
@@ -356,7 +360,7 @@ while (my $line = <$FH_TOPO>) {
             }
         }
     } elsif ($line =~ /^# Angle Coeffs/) { 
-        if (my $next_line = <$FH_TOPO>) {
+        if (defined($next_line = <$FH_TOPO>)) {
             if ($next_line =~ /^#$/) {
                 print $OUT "\n";
                 handle_angle_coefficients();
@@ -364,7 +368,7 @@ while (my $line = <$FH_TOPO>) {
             }
         }
     } elsif ($line =~ /^# Dihedral Coeffs/) { 
-         if (my $next_line = <$FH_TOPO>) {
+        if (defined($next_line = <$FH_TOPO>)) {
             if ($next_line =~ /^#$/) {
                 print $OUT "\n";
                 handle_dihedral_coefficients();
@@ -372,7 +376,7 @@ while (my $line = <$FH_TOPO>) {
             }
         }
     } elsif ($line =~ /^# Improper Coeffs/) { 
-         if (my $next_line = <$FH_TOPO>) {
+        if (defined($next_line = <$FH_TOPO>)) {
             if ($next_line =~ /^#$/) {
                 print $OUT "\n";
                 handle_improper_coefficients();
