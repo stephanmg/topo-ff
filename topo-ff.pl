@@ -13,8 +13,10 @@
 #         TODO - see Axel's notes:
 #                a) NBFIX 
 #                b) WATER for LAMMPS 
-#                c) dihedral weighting (last parameter, aka LJ 1-4 scaling)
+#                c) dihedral weighting (last parameter, aka LJ 1-4 scaling
+#                   this is set to 0, but needs to be computed accordingly!)
 #
+#              - write input script for LAMMPS too
 #              - comment doxygen alike file
 #              - perl test cases
 #              - pretty print statistics or discard
