@@ -7,7 +7,7 @@
 #
 #  DESCRIPTION: Parametrize the TOPOLOGY file for LAMMPS generated with 
 #               the VMD plugin 'topotools' with a given CHARMM force field,
-#               i.e. use the provided CHARMM topology and parameter file,
+#               i.e. use the provided CHARMM topology (and parameter) file,
 #               then write the completed LAMMPS data to a OUTPUT file.
 #
 #         TODO - see Axel's notes:
@@ -23,13 +23,15 @@
 #              - perl test cases
 #              - pretty print statistics or discard
 #              - CLI interface
+#              (- update masses from CHARMM parameter file ('topotools' 
+#                provides us already with the correct masses))
 #
 #        NOTES: - Parameters in CHARMM file cannot be separated by empty lines,
 #               they have the meaning to separate the different sections.
 #               - When generating a PSF/PDB file pair with VMD for instance,
 #                 the provided topology file (CHARMM) should match the 
 #                 provided parameter file (CHARMM) when using topo-ff.
-#               - When using topotools then you need to retypebonds,
+#               - When using 'topotools' then you need to retypebonds,
 #                 retypeangles, retypedihedrals and retypeimpropers,
 #                 then write the LAMMPS data with writelammpsdata.
 #               - LAMMPS currently cannot use CMAP corrections from FFs.
