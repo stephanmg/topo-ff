@@ -420,7 +420,8 @@ then write the completed LAMMPS data to an OUTPUT file.
 =over
 
 =item a) dihedral weighting (last parameter, aka LJ 1-4 scaling
-this is set to 0, but needs to be computed accordingly)
+this is set to 0, but needs to be computed accordingly):
+L<Parameters|http://lammps.sandia.gov/doc/dihedral_charmm.html>
 
 =item b) take care of NBFIX terms
 
