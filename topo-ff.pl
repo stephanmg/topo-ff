@@ -7,23 +7,33 @@ use strict;
 use warnings;
 use Getopt::Long;
 use Pod::Usage;
+use constant VERSION => "1.0";
 
 # CLI
 my $topo;
 my $ff; 
 my $output;
 my $verbose = 0;
+my $no_dihedrals = 0;
+my $no_angles = 0;
+my $no_impropers = 0;
+my $no_pairs = 0;
+my $no_bonds = 0;
 my $not_found = "not_found.txt";
 
-
 GetOptions(
-    'topology=s' => \$topo,
-    'ff=s'       => \$ff,
-    'output=s'   => \$output,
-    'verbose'  => \$verbose,
-    'usage'    => sub { pod2usage(2) },
-    'help'     => sub { pod2usage(1) },
-    'man'      => sub { pod2usage(-existatus => 0, -verbose => 2) },
+    'topology=s'        => \$topo,
+    'ff=s'              => \$ff,
+    'output=s'          => \$output,
+    'verbose'           => \$verbose,
+    'no-angles'         => \$no_angles,
+    'no-bonds'          => \$no_bonds,
+    'no-dihedrals'      => \$no_dihedrals,
+    'no-pairs'          => \$no_pairs,
+    'no-impropers'      => \$no_impropers,
+    'usage'             => sub { pod2usage(2) },
+    'help'              => sub { pod2usage(1) },
+    'man'               => sub { pod2usage(-existatus => 0, -verbose => 2) },
 );
 
 pod2usage(2) unless defined($topo) and defined($ff) and defined($output);
@@ -40,13 +50,6 @@ open (my $CONFIG, ">:encoding(UTF-8)", "${output}.in")
 open (my $NOTFOUND, ">:encoding(UTF-8)", "$not_found")
     or die "Could not open file '$not_found': $!";
 
-
-# what to write (TODO and add as parameter --all --angles, --impropers, etc! make --all default!)
-my $write_dihedral = 1;
-my $write_angles = 1;
-my $write_impropers = 1;
-my $write_pairs = 1;
-my $write_bonds = 1;
 
 # handle coefficients
 my @pairs;
@@ -341,10 +344,16 @@ if ($verbose) {
     print "****************************\n";
 }
 
+# write data file header
+my $header = <$FH_TOPO>;
+chomp($header);
+$header .= " (parametrized with CHARMM22 force field parameters by $0 v" . VERSION . ")\n\n";
+print $OUT $header;
+
 # write data file
 while (my $line = <$FH_TOPO>) {
     my $next_line;
-    if ($line =~ /^# Pair Coeffs/) {
+    if ($line =~ /^# Pair Coeffs/ && ! $no_pairs) {
         if (defined ($next_line = <$FH_TOPO>)) {
            if ($next_line =~ /^#$/) {
                 print $OUT "\n";
@@ -352,7 +361,7 @@ while (my $line = <$FH_TOPO>) {
                 print $OUT "\n";
            }
         }
-    } elsif ($line =~ /^# Bond Coeffs/) {
+    } elsif ($line =~ /^# Bond Coeffs/ && ! $no_bonds) {
         if (defined($next_line = <$FH_TOPO>)) {
             if ($next_line =~ /^#$/) {
                 print $OUT "\n";
@@ -360,7 +369,7 @@ while (my $line = <$FH_TOPO>) {
                 print $OUT "\n";
             }
         }
-    } elsif ($line =~ /^# Angle Coeffs/) { 
+    } elsif ($line =~ /^# Angle Coeffs/ && ! $no_angles) { 
         if (defined($next_line = <$FH_TOPO>)) {
             if ($next_line =~ /^#$/) {
                 print $OUT "\n";
@@ -368,7 +377,7 @@ while (my $line = <$FH_TOPO>) {
                 print $OUT "\n";
             }
         }
-    } elsif ($line =~ /^# Dihedral Coeffs/) { 
+    } elsif ($line =~ /^# Dihedral Coeffs/ && ! $no_dihedrals) { 
         if (defined($next_line = <$FH_TOPO>)) {
             if ($next_line =~ /^#$/) {
                 print $OUT "\n";
@@ -376,7 +385,7 @@ while (my $line = <$FH_TOPO>) {
                 print $OUT "\n";
             }
         }
-    } elsif ($line =~ /^# Improper Coeffs/) { 
+    } elsif ($line =~ /^# Improper Coeffs/ && ! $no_impropers) { 
         if (defined($next_line = <$FH_TOPO>)) {
             if ($next_line =~ /^#$/) {
                 print $OUT "\n";
@@ -430,7 +439,8 @@ topo-ff - Parametrize a LAMMPS data file with a CHARMM force field
 
 =for pod2usage: 
 
-topo-ff --topology TOP --ff FF --output OUT [--verbose] [--help] [--man] 
+topo-ff --topology TOP --ff FF --output OUT [--verbose] [--no-angles] [--no-dihedrals]
+[--no-impropers] [--no-bonds] [--no-pairs] [--help] [--man] [--usage]
 
 =head1 OPTIONS
 
@@ -447,6 +457,21 @@ topo-ff --topology TOP --ff FF --output OUT [--verbose] [--help] [--man]
 
 =item B<--verbose>
     Print more debug information.
+
+=item B<--no-bonds>
+    Do not write bond coefficients
+
+=item B<--no-angles>
+    Do not write angle coefficients
+
+=item B<--no-dihedrals>
+    Do not write dihedral coefficients
+
+=item B<--no-impropers>
+    Do not write improper coefficients
+
+=item B<--no-pairs>
+    Do not write pair coefficients
 
 =item B<--help>
     Print a brief help message and exit.
@@ -484,8 +509,6 @@ us already with the correct masses)) instead of 'topotools' provided
 values
 
 =item e) perl test cases
-
-=item f) select what to write see TODO above
 
 =back
 
