@@ -428,7 +428,7 @@ topo-ff --topology TOP --ff FF --output OUT [--verbose] [--help] [--man]
     FF - CHARMM force field parameter file
 
 =item B<--output>
-    OUT - output file
+    OUT - output file basename
 
 =item B<--verbose>
     Print more debug information.
@@ -450,7 +450,8 @@ topo-ff --topology TOP --ff FF --output OUT [--verbose] [--help] [--man]
 Parametrize the TOPOLOGY file for LAMMPS generated with 
 the VMD plugin 'topotools' with a given CHARMM force field,
 i.e. use the provided CHARMM topology (and parameter) file,
-then write the completed LAMMPS data to an OUTPUT file.
+then write the completed LAMMPS data and run script to 
+two OUTPUT files (with suffixes .data and .in).
 
 =head1 TODOS
 
