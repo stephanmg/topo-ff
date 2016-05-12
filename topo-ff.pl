@@ -461,15 +461,13 @@ L<Parameters|http://lammps.sandia.gov/doc/dihedral_charmm.html>
 =item c) TIP3P for LAMMPS uses special LJ potentials:
 L<Parameters|http://lammps.sandia.gov/doc/Section_howto.html#howto-7>
 
-=item write input script for LAMMPS 
+=item d) correct bounding box coordinates given by 'topotools'
 
-=item correct bounding box coordinates given by 'topotools'
-
-=item perl test cases
-
-=item update masses from CHARMM parameter file ('topotools' provides 
+=item e) update masses from CHARMM parameter file ('topotools' provides 
 us already with the correct masses)) instead of 'topotools' provided
 values
+
+=item f) perl test cases
 
 =back
 
