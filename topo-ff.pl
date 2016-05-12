@@ -3,7 +3,7 @@
 #
 #         FILE: topo-ff.pl
 #
-#        USAGE: ./topo-ff.pl  TOPOLOGY CHARMM OUTPUT
+#        USAGE: ./topo-ff.pl TOPOLOGY CHARMM OUTPUT
 #
 #  DESCRIPTION: Parametrize the TOPOLOGY file for LAMMPS generated with 
 #               the VMD plugin 'topotools' with a given CHARMM force field,
@@ -13,8 +13,8 @@
 #         TODO - see Axel's notes:
 #                a) dihedral weighting (last parameter, aka LJ 1-4 scaling
 #                   this is set to 0, but needs to be computed accordingly)
-#                b) NBFIX 
-#                c) WATER for LAMMPS (special)
+#                b) take care of NBFIX terms
+#                c) TIP3P for LAMMPS uses special LJ potentials 
 #
 #              - write input script for LAMMPS too
 #              - correct bounding box coordinates given by 'topotools'
