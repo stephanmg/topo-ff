@@ -11,6 +11,7 @@ my $topo;
 my $ff; 
 my $output;
 my $verbose = 0;
+my $not_found = "not_found.txt";
 
 GetOptions(
     'topology=s' => \$topo,
@@ -24,16 +25,17 @@ GetOptions(
 
 pod2usage(2) unless defined($topo) and defined($ff) and defined($output);
 
-
-# files
-open(my $FH_TOPO, '<:encoding(UTF-8)', $topo)
-  or die "Could not open file '$topo': $!";
-open(my $FH_FF, '<:encoding(UTF-8)', $ff)
-  or die "Could not open file '$ff': $!";
-open (my $OUT, '>', $output)
-    or die "Could not open file '$output': $!";
-open (my $NOTFOUND, '>', 'not_found')
-    or die "Could not open file 'not_found': $!";
+# open files
+open(my $FH_TOPO, "<:encoding(UTF-8)", "$topo")
+  or die "Could not open toplogy file '$topo': $!";
+open(my $FH_FF, "<:encoding(UTF-8)", "$ff")
+  or die "Could not open force field file '$ff': $!";
+open (my $OUT, ">:encoding(UTF-8)", "${output}.data")
+    or die "Could not open output file '$output': $!";
+open (my $CONFIG, ">:encoding(UTF-8)", "${output}.in")
+    or die "Could not open config file '${output}.in': $!"; 
+open (my $NOTFOUND, ">:encoding(UTF-8)", "$not_found")
+    or die "Could not open file '$not_found': $!";
 
 # coefficients
 my @pairs;
@@ -320,7 +322,7 @@ if ($verbose) {
     print "****************************\n";
 }
 
-# parameterize the TOPOLOGY with CHARMM ff coefficients
+# write data file
 while (my $line = <$FH_TOPO>) {
     my $next_line;
     if ($line =~ /^# Pair Coeffs/) {
@@ -367,6 +369,37 @@ while (my $line = <$FH_TOPO>) {
         print $OUT $line;
     }
 }
+
+# write config file
+print $CONFIG "# Create by $0.";
+print $CONFIG "units           real\n";
+print $CONFIG "neigh_modify    delay 2 every 1\n\n";
+print $CONFIG "atom_style      full\n";
+print $CONFIG "bond_style      harmonic\n";
+print $CONFIG "angle_style     charmm\n";
+print $CONFIG "dihedral_style  charmm\n";
+print $CONFIG "improper_style  harmonic\n\n";
+print $CONFIG "pair_style      lj/charmm/coul/long 8 10\n";
+print $CONFIG "pair_modify     mix arithmetic\n";
+print $CONFIG "kspace_style    pppm 1e-4\n\n";
+print $CONFIG "read_data       ${output}.data\n\n";
+print $CONFIG "special_bonds   charmm\n";
+print $CONFIG "fix             1 all nve\n";
+print $CONFIG "fix             2 all shake 1e-6 500 0 m 1.0\n";
+print $CONFIG "velocity        all create 0.0 12345678 dist uniform\n\n";
+print $CONFIG "thermo          1\n";
+print $CONFIG "thermo_style    multi\n";
+print $CONFIG "timestep        0.5\n\n";
+print $CONFIG "dump            1 all atom 10 ${output}.dump\n";
+print $CONFIG "dump_modify     1 image yes scale yes\n\n";
+print $CONFIG "run             20\n";
+
+# close files
+close($NOTFOUND);
+close($CONFIG);
+close($OUT);
+close($FH_FF);
+close($FH_TOPO);
 
 __END__
 
