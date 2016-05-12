@@ -17,7 +17,7 @@
 #                c) WATER for LAMMPS (special)
 #
 #              - write input script for LAMMPS too
-#              - correct bounding box coordinates
+#              - correct bounding box coordinates given by 'topotools'
 #
 #              - comment doxygen alike file
 #              - perl test cases
@@ -27,14 +27,15 @@
 #                provides us already with the correct masses))
 #
 #        NOTES: - Parameters in CHARMM file cannot be separated by empty lines,
-#               they have the meaning to separate the different sections.
+#                 they have the meaning to separate the different sections.
 #               - When generating a PSF/PDB file pair with VMD for instance,
 #                 the provided topology file (CHARMM) should match the 
 #                 provided parameter file (CHARMM) when using topo-ff.
 #               - When using 'topotools' then you need to retypebonds,
 #                 retypeangles, retypedihedrals and retypeimpropers,
 #                 then write the LAMMPS data with writelammpsdata.
-#               - LAMMPS currently cannot use CMAP corrections from FFs.
+#               - LAMMPS currently cannot use CMAP corrections from FFs,
+#                 i.e. no cross terms are available and thus are ignored here.
 #               
 # REQUIREMENTS: Perl v5.000
 #         BUGS: --
