@@ -1,7 +1,6 @@
 #!/usr/bin/env perl 
-### topo-ff - Parametrize a LAMMPS data file with a CHARMM force field
-##
-# Pragmas
+## topo-ff - Parametrize a LAMMPS data file with a CHARMM force field
+
 use 5.000;
 use utf8;
 use strict;
@@ -415,7 +414,7 @@ topo-ff - Parametrize a LAMMPS data file with a CHARMM force field
 
 =for pod2usage: 
 
-topo-ff --topology TOP --ff FF --output OUT [--verbose] [--help] [--man]
+topo-ff --topology TOP --ff FF --output OUT [--verbose] [--help] [--man] 
 
 =head1 OPTIONS
 
