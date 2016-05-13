@@ -43,7 +43,7 @@ open(my $FH_TOPO, "<:encoding(UTF-8)", "$topo")
   or die "Could not open toplogy file '$topo': $!";
 open(my $FH_FF, "<:encoding(UTF-8)", "$ff")
   or die "Could not open force field file '$ff': $!";
-open (my $OUT, ">:encoding(UTF-8)", "${output}.data")
+open (my $OUT, ">:encoding(UTF-8)", "${output}.tmp")
     or die "Could not open output file '$output': $!";
 open (my $CONFIG, ">:encoding(UTF-8)", "${output}.in")
     or die "Could not open config file '${output}.in': $!"; 
@@ -431,15 +431,16 @@ close($FH_FF);
 close($FH_TOPO);
 
 # correct written files
+# TODO read command can be generalized (to read angles and dihedrals and coeffs of them!)
 sub correct_dihedral_screening {
-    open (my $IN, "<:encoding(UTF-8)", "${output}.data")
+    open (my $IN, "<:encoding(UTF-8)", "${output}.tmp")
     or die "Could not open output file '$output': $!";
 
-    open (my $OUT, ">:encoding(UTF-8)", "${output}_final.data")
+    open (my $OUT, ">:encoding(UTF-8)", "${output}.data")
     or die "Could not open output file '$output': $!";
 
-    my @dihedrals;
     # get dihedrals
+    my @dihedrals;
     while (my $line = <$IN>) {
         if ($line =~ /^\s*Dihedrals/) {
             my $next_line = <$IN>;
@@ -458,8 +459,8 @@ sub correct_dihedral_screening {
     print "#dihedrals: ";
     print scalar @dihedrals . "\n";
 
-    seek $IN, 0, 0;
     # get dihedral coefficients
+    seek $IN, 0, 0;
     my @dihedral_coeffs;
     while (my $line = <$IN>) {
         if ($line =~ /^\s*Dihedral Coeffs/) {
@@ -479,6 +480,49 @@ sub correct_dihedral_screening {
 
     print "#dihedrals_coeffs: ";
     print scalar @dihedral_coeffs . "\n";
+
+    # get angles
+    my @angles;
+    while (my $line = <$IN>) {
+        if ($line =~ /^\s*Angles/) {
+            my $next_line = <$IN>;
+            if ($next_line =~ /^\s*$/) { # empty line marks start
+                while (my $very_next_line = <$IN>) {
+                    if ($very_next_line =~ /^\s*$/) { # empty line marks end
+                        last;
+                    } else {
+                        push @angles, $very_next_line;
+                    }
+                }
+            }
+            last;
+        }
+    }
+
+    print "#angles: ";
+    print scalar @angles . "\n";
+
+    # get angle coefficients
+    seek $IN, 0, 0;
+    my @angle_coeffs;
+    while (my $line = <$IN>) {
+        if ($line =~ /^\s*Angle Coeffs/) {
+            my $next_line = <$IN>;
+            if ($next_line =~ /^\s*$/) { # empty line marks start
+                while (my $very_next_line = <$IN>) {
+                    if ($very_next_line =~ /^\s*$/) { # empty line marks end
+                        last;
+                    } else {
+                        push @angle_coeffs, $very_next_line;
+                    }
+               }
+            }
+            last;
+        }
+    }
+
+    print "#angle_coeffs: ";
+    print scalar @angle_coeffs . "\n";
 
     my %hash;
     my $hash_id;
@@ -507,15 +551,50 @@ sub correct_dihedral_screening {
     my @unique_ids = do { my %seen; grep { !$seen{$_}++ } @ids };
     for my $id (@unique_ids) {
         $dihedral_coeffs[$id] =~ s/(.*)\d(\s*#\s*.*)/${1}0.5${2}/;
-        print "correct coeff: $dihedral_coeffs[$id]\n";
     }
 
-    # TODO After correction we can just write the dihedral coefficients 
-    # TODO but before we need to remove the old dihedral coefficients from
-    # the old file...
+    @ids = ();
+    for my $angle (@angles) {
+        my @columns = split " ", $angle;
+        $id1 = $columns[1]; # dihedral_coefficient type
+        $first = $columns[2]; # first atom defining dihedral
+        $last = $columns[4]; # first atom defining dihedral
+        ($first, $last) = ($last, $first) if ($first>$last); # swap
+        if (defined(($id1 = $hash{$first." ".$last}))) {
+            push @ids, $id1-1;
+        }
+    }
 
-    # TODO iterate over angles and find 1-4 in 5 membered rings
-    # coefficient needs to be set to 0 - remaining is 1 by default
+    # non-shared 1-4 in 5-membered rings
+    @unique_ids = do { my %seen; grep { !$seen{$_}++ } @ids };
+    for my $id (@unique_ids) {
+        $dihedral_coeffs[$id] =~ s/(.*)\d(\s*#\s*.*)/${1}0${2}/;
+    }
+ 
+    seek $IN, 0, 0;
+    while (my $line = <$IN>) {
+        if ($line =~ /^\s*Dihedral Coeffs/) {
+            print $OUT "Dihedral Coeffs\n\n";
+            my $next_line = <$IN>;
+            my $counter = 0;
+            if ($next_line =~ /^\s*$/) { # empty line marks start
+                while (my $very_next_line = <$IN>) {
+                     if ($very_next_line =~ /^\s*$/) { # empty line marks end
+                         last;
+                      } else {
+                         print $OUT $dihedral_coeffs[$counter];
+                         $counter++;
+                     }
+                 }
+            }
+        } else {
+           print $OUT $line;
+        }
+    }
+    
+   
+    close($OUT);
+    close($IN);
 
 }
 
@@ -590,8 +669,6 @@ two OUTPUT files (with suffixes .data and .in).
 =head1 TODOS
 
 =over
-
-=item most important: correct dihedral
 
 =item a) take care of NBFIX terms, mixing i,j for LJ potential
 
