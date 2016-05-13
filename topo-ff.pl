@@ -468,13 +468,17 @@ sub correct_dihedral_screening {
     open (my $OUT, ">:encoding(UTF-8)", "${output}.data")
     or die "Could not open output file '$output': $!";
 
-    # sections in CHARMM param file
+    # sections in LAMMPS data file
+    my @dihedrals;
+    my @dihedral_coeffs;
+    my @angles;
+    my @angle_coeffs;
+
     my %types = ( "Dihedrals"       => \@dihedrals,
                   "Dihedral Coeffs" => \@dihedral_coeffs,
                   "Angles"          => \@angles,
                   "Angle Coeffs"    => \@angle_coeffs );
 
-    my @dihedrals;
     for my $type (keys %types) {
         read_entities($types{$type}, $type, $IN);
         print_entities_info($types{$type}, $type);
