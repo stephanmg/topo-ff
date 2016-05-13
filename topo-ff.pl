@@ -59,8 +59,8 @@ my @impropers;
 
 # handle pair coefficients
 sub handle_pair_coefficients {
-    print $NOTFOUND "Pair Coeffs\n\n";
-    print $OUT "Pair Coeffs\n\n";
+    print $NOTFOUND " Pair Coeffs\n\n";
+    print $OUT " Pair Coeffs\n\n";
     my $index = 1;
     while (my $line = <$FH_TOPO>) {
         if ($line =~ /^#.*/) {
@@ -97,8 +97,8 @@ sub handle_pair_coefficients {
 
 # handle bond coefficients
 sub handle_bond_coefficients {
-    print $NOTFOUND "Bond Coeffs\n\n";
-    print $OUT "Bond Coeffs\n\n";
+    print $NOTFOUND " Bond Coeffs\n\n";
+    print $OUT " Bond Coeffs\n\n";
     my $index = 1;
     while (my $line = <$FH_TOPO>) {
         if ($line =~ /^#.*/) {
@@ -126,8 +126,8 @@ sub handle_bond_coefficients {
 
 # handle angle coefficients
 sub handle_angle_coefficients {
-    print $OUT "Angle Coeffs\n\n";
-    print $NOTFOUND "Angle Coeffs\n\n";
+    print $OUT " Angle Coeffs\n\n";
+    print $NOTFOUND " Angle Coeffs\n\n";
     my $index = 1;
     while (my $line = <$FH_TOPO>) {
         if ($line =~ /^#.*/) {
@@ -159,8 +159,8 @@ sub handle_angle_coefficients {
 
 # handle dihedral coefficients
 sub handle_dihedral_coefficients {
-    print $NOTFOUND "Dihedral Coeffs\n\n";
-    print $OUT "Dihedral Coeffs\n\n";
+    print $NOTFOUND " Dihedral Coeffs\n\n";
+    print $OUT " Dihedral Coeffs\n\n";
     my $weighting = 1; # default LJ 1-4 weighting 1, in rings different value!
     my $index = 1;
     while (my $line = <$FH_TOPO>) {
@@ -221,8 +221,8 @@ sub handle_dihedral_coefficients {
 
 # handle improper coefficients
 sub handle_improper_coefficients {
-    print $OUT "Improper Coeffs\n\n";
-    print $NOTFOUND "Improper Coeffs\n\n";
+    print $OUT " Improper Coeffs\n\n";
+    print $NOTFOUND " Improper Coeffs\n\n";
     my $index = 1;
     while (my $line = <$FH_TOPO>) {
         if ($line =~ /^#.*/) {
@@ -687,6 +687,9 @@ by the pair_coeff command but applied in the dihedral section)
 The last parameter for the dihedral_coeff (weighting) needs
 to be adjusted, cf. comments in the code and the LAMMPS documentation
 L<Parameters|http://lammps.sandia.gov/doc/dihedral_charmm.html>
+
+=item an intermediate data file is writte where the dihedral_coeffs
+have not been corrected.
 
 =back
 
