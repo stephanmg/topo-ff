@@ -50,7 +50,7 @@ open (my $CONFIG, ">:encoding(UTF-8)", "${output}.in")
 open (my $NOTFOUND, ">:encoding(UTF-8)", "$not_found")
     or die "Could not open file '$not_found': $!";
 
-# handle coefficients
+# coefficients from CHARMM parameter file
 my @pairs;
 my @bonds;
 my @angles;
@@ -647,7 +647,7 @@ two OUTPUT files (with suffixes .data and .in).
 
 =over
 
-=item a) handle NBFIX terms, mixing i,j for LJ potential
+=item a) handle NBFIX terms, mixing i,j for LJ potential (for CHARMM22 probably nothing to do for now...)
 
 =item b) correct TIP3P potentials for LAMMPS (special LJ potentials):
 L<Parameters|http://lammps.sandia.gov/doc/Section_howto.html#howto-7>
