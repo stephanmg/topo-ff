@@ -660,6 +660,8 @@ values
 
 =item e) perl test cases for some structures
 
+=item f) cleanup code
+
 =back
 
 =head1 NOTES
