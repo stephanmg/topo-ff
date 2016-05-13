@@ -50,7 +50,6 @@ open (my $CONFIG, ">:encoding(UTF-8)", "${output}.in")
 open (my $NOTFOUND, ">:encoding(UTF-8)", "$not_found")
     or die "Could not open file '$not_found': $!";
 
-
 # handle coefficients
 my @pairs;
 my @bonds;
@@ -162,7 +161,7 @@ sub handle_angle_coefficients {
 sub handle_dihedral_coefficients {
     print $NOTFOUND "Dihedral Coeffs\n\n";
     print $OUT "Dihedral Coeffs\n\n";
-    my $weighting = 1; # for now LJ 1-4 weighting is used whenever available
+    my $weighting = 1; # default LJ 1-4 weighting 1, in rings different value!
     my $index = 1;
     while (my $line = <$FH_TOPO>) {
         if ($line =~ /^#.*/) {
@@ -296,7 +295,7 @@ sub handle_improper_coefficients {
     }
 }
 
-# helper method to read coefficients for each type
+# read coefficients for different sections in CHARMM parameter file
 sub read_coefficients {
     my $type = shift;
     while (<$FH_FF>) {
@@ -319,7 +318,7 @@ my %types = ( "BONDS"     => \@bonds,
               "IMPROPER" => \@impropers
             );
 
-# read in all coefficients from CHARMM param file
+# read in all coefficients for each section specified in CHARMM parameter file
 for my $type (keys %types) {
     seek $FH_FF, 0, 0;
     while (my $line = <$FH_FF>) {
@@ -481,6 +480,7 @@ sub correct_dihedral_screening {
                   "Angle Coeffs"    => \@angle_coeffs 
                 );
 
+    # internal statistics (angle and dihedrals w coefficients during correction)
     if ($verbose) {
         print "Information from LAMMPS data file\n";
         print "(during correcting dihedral coefficients):\n";
@@ -520,7 +520,11 @@ sub correct_dihedral_screening {
         }
     }
 
-    # shared 1-4 in 6-membered rings
+    ## shared 1-4 in 6-membered rings
+    # n 6-membered rings, the same 1-4 interaction would be computed
+    # twice (once for the clockwise 1-4 pair in dihedral 1-2-3-4 and
+    # once in the counterclockwise dihedral 1-6-5-4) and thus the
+    # weighting factor has to be 0.5 in this case.
     my @unique_ids = do { my %seen; grep { !$seen{$_}++ } @ids };
     for my $id (@unique_ids) {
         $dihedral_coeffs[$id] =~ s/(.*)\d(\s*#\s*.*)/${1}0.5${2}/;
@@ -538,7 +542,11 @@ sub correct_dihedral_screening {
         }
     }
 
-    # non-shared 1-4 in 5-membered rings
+    ## non-shared 1-4 in 5-membered rings
+    # In 4-membered or 5-membered rings, the 1-4 dihedral also is
+    # counted as a 1-2 or 1-3 interaction when going around the
+    # ring in the opposite direction and thus the weighting factor
+    # is 0.0, as the 1-2 and 1-3 exclusions take precedence.
     @unique_ids = do { my %seen; grep { !$seen{$_}++ } @ids };
     for my $id (@unique_ids) {
         $dihedral_coeffs[$id] =~ s/(.*)\d(\s*#\s*.*)/${1}0${2}/;
