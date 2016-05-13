@@ -459,6 +459,7 @@ sub print_entities_info {
     print scalar @$entity;
     print "\n";
 }
+
 # correct written files
 sub correct_dihedral_screening {
     open (my $IN, "<:encoding(UTF-8)", "${output}.tmp")
@@ -467,25 +468,17 @@ sub correct_dihedral_screening {
     open (my $OUT, ">:encoding(UTF-8)", "${output}.data")
     or die "Could not open output file '$output': $!";
 
-    # get dihedrals
+    # sections in CHARMM param file
+    my %types = ( "Dihedrals"       => \@dihedrals,
+                  "Dihedral Coeffs" => \@dihedral_coeffs,
+                  "Angles"          => \@angles,
+                  "Angle Coeffs"    => \@angle_coeffs );
+
     my @dihedrals;
-    read_entities(\@dihedrals, "Dihedrals", $IN);
-    print_entities_info(\@dihedrals, "Dihedrals");
-
-    # get dihedral coefficients
-    my @dihedral_coeffs;
-    read_entities(\@dihedral_coeffs, "Dihedral Coeffs", $IN);
-    print_entities_info(\@dihedrals, "Dihedral Coeffs");
-
-    # get angles
-    my @angles;
-    read_entities(\@angles, "Angles", $IN);
-    print_entities_info(\@angles, "Angles");
-
-    # get angle coefficients
-    my @angle_coeffs;
-    read_entities(\@angle_coeffs, "Angle Coeffs", $IN);
-    print_entities_info(\@angle_coeffs, "Angle Coeffs");
+    for my $type (keys %types) {
+        read_entities($types{$type}, $type, $IN);
+        print_entities_info($types{$type}, $type);
+    }
 
     my %hash;
     my $hash_id;
