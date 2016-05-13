@@ -430,8 +430,36 @@ close($OUT);
 close($FH_FF);
 close($FH_TOPO);
 
+sub read_entities {
+    my $entity = shift;
+    my $name = shift;
+    my $IN = shift;
+    while (my $line = <$IN>) {
+        if ($line =~ /^\s*$name/) {
+            my $next_line = <$IN>;
+            if ($next_line =~ /^\s*$/) { # empty line marks start
+                while (my $very_next_line = <$IN>) {
+                    if ($very_next_line =~ /^\s*$/) { # empty line marks end
+                        last;
+                    } else {
+                        push @$entity, $very_next_line;
+                    }
+                }
+            }
+            last;
+        }
+    }
+    seek $IN, 0, 0;
+}
+
+sub print_entities_info {
+    my $entity = shift;
+    my $name = shift;
+    print "# $name: ";
+    print scalar @$entity;
+    print "\n";
+}
 # correct written files
-# TODO read command can be generalized (to read angles and dihedrals and coeffs of them!)
 sub correct_dihedral_screening {
     open (my $IN, "<:encoding(UTF-8)", "${output}.tmp")
     or die "Could not open output file '$output': $!";
@@ -441,88 +469,23 @@ sub correct_dihedral_screening {
 
     # get dihedrals
     my @dihedrals;
-    while (my $line = <$IN>) {
-        if ($line =~ /^\s*Dihedrals/) {
-            my $next_line = <$IN>;
-            if ($next_line =~ /^\s*$/) { # empty line marks start
-                while (my $very_next_line = <$IN>) {
-                    if ($very_next_line =~ /^\s*$/) { # empty line marks end
-                        last;
-                    } else {
-                        push @dihedrals, $very_next_line;
-                    }
-                }
-            }
-            last;
-        }
-    }
-    print "#dihedrals: ";
-    print scalar @dihedrals . "\n";
+    read_entities(\@dihedrals, "Dihedrals", $IN);
+    print_entities_info(\@dihedrals, "Dihedrals");
 
     # get dihedral coefficients
-    seek $IN, 0, 0;
     my @dihedral_coeffs;
-    while (my $line = <$IN>) {
-        if ($line =~ /^\s*Dihedral Coeffs/) {
-            my $next_line = <$IN>;
-            if ($next_line =~ /^\s*$/) { # empty line marks start
-                while (my $very_next_line = <$IN>) {
-                    if ($very_next_line =~ /^\s*$/) { # empty line marks end
-                        last;
-                    } else {
-                        push @dihedral_coeffs, $very_next_line;
-                    }
-               }
-            }
-            last;
-        }
-    }
-
-    print "#dihedrals_coeffs: ";
-    print scalar @dihedral_coeffs . "\n";
+    read_entities(\@dihedral_coeffs, "Dihedral Coeffs", $IN);
+    print_entities_info(\@dihedrals, "Dihedral Coeffs");
 
     # get angles
     my @angles;
-    while (my $line = <$IN>) {
-        if ($line =~ /^\s*Angles/) {
-            my $next_line = <$IN>;
-            if ($next_line =~ /^\s*$/) { # empty line marks start
-                while (my $very_next_line = <$IN>) {
-                    if ($very_next_line =~ /^\s*$/) { # empty line marks end
-                        last;
-                    } else {
-                        push @angles, $very_next_line;
-                    }
-                }
-            }
-            last;
-        }
-    }
-
-    print "#angles: ";
-    print scalar @angles . "\n";
+    read_entities(\@angles, "Angles", $IN);
+    print_entities_info(\@angles, "Angles");
 
     # get angle coefficients
-    seek $IN, 0, 0;
     my @angle_coeffs;
-    while (my $line = <$IN>) {
-        if ($line =~ /^\s*Angle Coeffs/) {
-            my $next_line = <$IN>;
-            if ($next_line =~ /^\s*$/) { # empty line marks start
-                while (my $very_next_line = <$IN>) {
-                    if ($very_next_line =~ /^\s*$/) { # empty line marks end
-                        last;
-                    } else {
-                        push @angle_coeffs, $very_next_line;
-                    }
-               }
-            }
-            last;
-        }
-    }
-
-    print "#angle_coeffs: ";
-    print scalar @angle_coeffs . "\n";
+    read_entities(\@angle_coeffs, "Angle Coeffs", $IN);
+    print_entities_info(\@angle_coeffs, "Angle Coeffs");
 
     my %hash;
     my $hash_id;
