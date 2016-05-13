@@ -283,13 +283,13 @@ sub handle_improper_coefficients {
                      $index++;
                      $found = 1;
                      last; 
-                }
-           }
-        }
-             # no success - need manual fix
-             if ($found == 0) {
-                 print $NOTFOUND "Line: $line\n";
-             }
+                  }
+               }
+            }
+            # no success - need manual fix
+            if ($found == 0) {
+                print $NOTFOUND "Line: $line\n";
+            }
         } else {
             return;
         }
@@ -331,6 +331,7 @@ for my $type (keys %types) {
 
 # internal statistics (coefficients from provided CHARMM param file)
 if ($verbose) {
+    print "Information from CHARMM parameter file:\n";
     print "****************************\n";
     print "*** \tBonds: ";
     print scalar @bonds . "\t ***\n";
@@ -342,7 +343,7 @@ if ($verbose) {
     print scalar @dihedrals . "\t *** \n";
     print "*** \tImpropers: ";
     print scalar @impropers . "\t *** \n";
-    print "****************************\n";
+    print "****************************\n\n\n";
 }
 
 # write data file header
@@ -455,13 +456,13 @@ sub read_entities {
 sub print_entities_info {
     my $entity = shift;
     my $name = shift;
-    print "# $name: ";
-    print scalar @$entity;
-    print "\n";
+    print "\t$name: ";
+    print scalar @$entity . "\t \n";
 }
 
 # correct written files
 sub correct_dihedral_screening {
+    # open input and output files
     open (my $IN, "<:encoding(UTF-8)", "${output}.tmp")
     or die "Could not open output file '$output': $!";
 
@@ -477,21 +478,33 @@ sub correct_dihedral_screening {
     my %types = ( "Dihedrals"       => \@dihedrals,
                   "Dihedral Coeffs" => \@dihedral_coeffs,
                   "Angles"          => \@angles,
-                  "Angle Coeffs"    => \@angle_coeffs );
+                  "Angle Coeffs"    => \@angle_coeffs 
+                );
+
+    if ($verbose) {
+        print "Information from LAMMPS data file\n";
+        print "(during correcting dihedral coefficients):\n";
+        print "*******************************************\n";
+    }
 
     for my $type (keys %types) {
         read_entities($types{$type}, $type, $IN);
-        print_entities_info($types{$type}, $type);
+        print_entities_info($types{$type}, $type) unless !$verbose;
     }
 
+    if ($verbose) {
+        print "*******************************************\n";
+    }
+
+    # correct the dihedral coefficients
     my %hash;
     my $hash_id;
     my $id1;
     my $id2;
     my $first;
     my $last;
-
     my @ids;
+
     for my $dihedral (@dihedrals) {
         my @columns = split " ", $dihedral;
         $id1 = $columns[1]; # dihedral_coefficient type
@@ -530,7 +543,8 @@ sub correct_dihedral_screening {
     for my $id (@unique_ids) {
         $dihedral_coeffs[$id] =~ s/(.*)\d(\s*#\s*.*)/${1}0${2}/;
     }
- 
+    
+    # write final corrected LAMMPS data file
     seek $IN, 0, 0;
     while (my $line = <$IN>) {
         if ($line =~ /^\s*Dihedral Coeffs/) {
@@ -551,16 +565,11 @@ sub correct_dihedral_screening {
            print $OUT $line;
         }
     }
-    
-   
     close($OUT);
     close($IN);
-
 }
 
 correct_dihedral_screening();
-
-
 
 __END__
 
