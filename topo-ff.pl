@@ -647,18 +647,18 @@ two OUTPUT files (with suffixes .data and .in).
 
 =over
 
-=item a) take care of NBFIX terms, mixing i,j for LJ potential
+=item a) handle NBFIX terms, mixing i,j for LJ potential
 
-=item b) TIP3P for LAMMPS uses special LJ potentials:
+=item b) correct TIP3P potentials for LAMMPS (special LJ potentials):
 L<Parameters|http://lammps.sandia.gov/doc/Section_howto.html#howto-7>
 
-=item c) correct bounding box coordinates given by 'topotools'
+=item c) correct bounding box coordinates given by 'topotools' maybe
 
 =item d) update masses from CHARMM parameter file ('topotools' provides 
 us already with the correct masses)) instead of 'topotools' provided
 values
 
-=item e) perl test cases
+=item e) perl test cases for some structures
 
 =back
 
@@ -682,12 +682,13 @@ i.e. no cross terms are available and thus are ignored here.
 
 =item LAMMPS used LJ 1-4 interaction differently (specified
 by the pair_coeff command but applied in the dihedral section)
-Thus the last dihedral_coeff is set to 1 by this script,
+The last parameter for the dihedral_coeff (weighting) needs
+to be adjusted, cf. comments in the code and the LAMMPS documentation
 L<Parameters|http://lammps.sandia.gov/doc/dihedral_charmm.html>
 
 =back
 
-=head1 REQUIREMENTS              
+=head1 REQUIREMENTS
 
 Perl v5.000
 
