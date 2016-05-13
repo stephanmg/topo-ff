@@ -75,7 +75,8 @@ sub handle_pair_coefficients {
                     my $val1 = abs($output[1]);
                     my $val2 = 2.0*($output[2]*2.0**(-1/6));
                     if ($#output+1 == 2) {
-                        print $OUT "$index $val1 $val2 $val1 $val2 # $line\n";
+                       # print $OUT "$index $val1 $val2 $val1 $val2 # $line\n";
+                        print $OUT "$index $val1 $val2 # $line\n";
                     } else {
                         my $val3 = abs($output[2]);
                         my $val4 = 2.0*($output[2]*2.0**(-1/6));
@@ -429,6 +430,99 @@ close($OUT);
 close($FH_FF);
 close($FH_TOPO);
 
+# correct written files
+sub correct_dihedral_screening {
+    open (my $IN, "<:encoding(UTF-8)", "${output}.data")
+    or die "Could not open output file '$output': $!";
+
+    open (my $OUT, ">:encoding(UTF-8)", "${output}_final.data")
+    or die "Could not open output file '$output': $!";
+
+    my @dihedrals;
+    # get dihedrals
+    while (my $line = <$IN>) {
+        if ($line =~ /^\s*Dihedrals/) {
+            my $next_line = <$IN>;
+            if ($next_line =~ /^\s*$/) { # empty line marks start
+                while (my $very_next_line = <$IN>) {
+                    if ($very_next_line =~ /^\s*$/) { # empty line marks end
+                        last;
+                    } else {
+                        push @dihedrals, $very_next_line;
+                    }
+                }
+            }
+            last;
+        }
+    }
+    print "#dihedrals: ";
+    print scalar @dihedrals . "\n";
+
+    seek $IN, 0, 0;
+    # get dihedral coefficients
+    my @dihedral_coeffs;
+    while (my $line = <$IN>) {
+        if ($line =~ /^\s*Dihedral Coeffs/) {
+            my $next_line = <$IN>;
+            if ($next_line =~ /^\s*$/) { # empty line marks start
+                while (my $very_next_line = <$IN>) {
+                    if ($very_next_line =~ /^\s*$/) { # empty line marks end
+                        last;
+                    } else {
+                        push @dihedral_coeffs, $very_next_line;
+                    }
+               }
+            }
+            last;
+        }
+    }
+
+    print "#dihedrals_coeffs: ";
+    print scalar @dihedral_coeffs . "\n";
+
+    my %hash;
+    my $hash_id;
+    my $id1;
+    my $id2;
+    my $first;
+    my $last;
+
+    my @ids;
+    for my $dihedral (@dihedrals) {
+        my @columns = split " ", $dihedral;
+        $id1 = $columns[1]; # dihedral_coefficient type
+        $first = $columns[2]; # first atom defining dihedral
+        $last  = $columns[5]; # last atom defining dihedral
+        ($first, $last) = ($last, $first) if ($first>$last); # swap
+
+        if (!defined($id2 = $hash{$hash_id = $first . " " . $last})) {
+           $hash{$hash_id} = $id1;
+         } else {
+            push @ids, $id1-1;
+            push @ids, $id2-1;
+        }
+    }
+
+    # shared 1-4 in 6-membered rings
+    my @unique_ids = do { my %seen; grep { !$seen{$_}++ } @ids };
+    for my $id (@unique_ids) {
+        $dihedral_coeffs[$id] =~ s/(.*)\d(\s*#\s*.*)/${1}0.5${2}/;
+        print "correct coeff: $dihedral_coeffs[$id]\n";
+    }
+
+    # TODO After correction we can just write the dihedral coefficients 
+    # TODO but before we need to remove the old dihedral coefficients from
+    # the old file...
+
+    # TODO iterate over angles and find 1-4 in 5 membered rings
+    # coefficient needs to be set to 0 - remaining is 1 by default
+
+}
+
+correct_dihedral_screening();
+
+
+
 __END__
 
 =head1 NAME
@@ -496,6 +590,8 @@ two OUTPUT files (with suffixes .data and .in).
 =head1 TODOS
 
 =over
+
+=item most important: correct dihedral
 
 =item a) take care of NBFIX terms, mixing i,j for LJ potential
 
