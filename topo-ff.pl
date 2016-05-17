@@ -350,7 +350,7 @@ if ($verbose) {
 # write data file header
 my $header = <$FH_TOPO>;
 chomp($header);
-$header .= " (parametrized with CHARMM22 force field parameters by $0 v" . VERSION . ")\n\n";
+$header .= " (parametrized with CHARMM force field parameters by $0 v" . VERSION . ")\n\n";
 print $OUT $header;
 
 # write data file
