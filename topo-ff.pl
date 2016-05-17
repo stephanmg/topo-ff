@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
 ## topo-ff - Parametrize a LAMMPS data file with a CHARMM force field
+# TODO test cases and code cleanup
 
 use 5.000;
 use utf8;
@@ -8,7 +9,7 @@ use warnings;
 use Getopt::Long;
 use Pod::Usage;
 use File::Copy qw(copy);
-use constant VERSION => "1.0";
+use constant VERSION => "0.1";
 
 # CLI
 my $topo;
@@ -697,49 +698,42 @@ topo-ff --topology TOP --ff FF --output OUT [--verbose] [--no-angles] [--no-dihe
 
 Parametrize the TOPOLOGY file for LAMMPS generated with 
 the VMD plugin 'topotools' with a given CHARMM force field,
-i.e. use the provided CHARMM parameter file,
-then write the completed LAMMPS data and run script to 
-two OUTPUT files (with suffixes .data and .in).
-
-=head1 TODOS
-
-=over
-
-=item a) correct TIP3P potentials for LAMMPS (special LJ potentials):
-L<Parameters|http://lammps.sandia.gov/doc/Section_howto.html#howto-7>
-
-=item b) perl test cases and cleanup code
-
-=back
+i.e. use the provided CHARMM parameter file, then write the 
+completed LAMMPS data and run script to two OUTPUT files 
+(with suffixes .data and .in).
 
 =head1 NOTES
 
 =over
 
-=item Parameters in CHARMM file cannot be separated by empty lines,
-they have the meaning to separate the different sections.
+=item A sane CHARMM parameter file is required, thus entries
+within sections cannot be separated by newlines - newlines
+have the meaning of a section separator within CHARMM.
 
-=item When using 'topotools' then you need to retypebonds,
-retypeangles, retypedihedrals and retypeimpropers,
-then write the LAMMPS data with writelammpsdata.
+=item When using the VMD plugin 'topotools' then one is required
+to use retypebonds, retypeangles, retypedihedrals and retypeimpropers
+commands to prepare the intermediate LAMMPS output with the appropriate
+hints for the force field parametrization before using writelammpsdata.
 
-=item LAMMPS currently cannot use CMAP corrections from FFs,
-i.e. no cross terms are available and thus are ignored here.
+=item Current development version of LAMMPS does not incldue cross-terms,
+also known as CMAP corrections from the CHARMM force field, therefore,
+topo-ff should be used with a CHARMM22 parameter file.
 
 =item LAMMPS used LJ 1-4 interaction differently (specified
 by the pair_coeff command but applied in the dihedral section)
-The last parameter for the dihedral_coeff (weighting) needs
-to be adjusted, cf. comments in the code and the LAMMPS documentation
-L<Parameters|http://lammps.sandia.gov/doc/dihedral_charmm.html>
+The last parameter for the dihedral_coeff (weighting) is therefore
+adjusted, cf. comments in the code and read the LAMMPS documentation
+at L<Parameters|http://lammps.sandia.gov/doc/dihedral_charmm.html>
 
-=item in CHARMM impropers are defined from the topology files. topotools
-just guesses them for structures that look like they might be
-requiring them to stay planar. make sure that the impropers are defined
-correctly before using topo-ff.pl.
+=item In CHARMM impropers are defined from the topology file. The VMD
+plugin 'topotools' just guesses them for structures that look like they 
+might be requiring them to stay planar. Make sure that the impropers
+are defined the way you intended before using topo-ff.
 
-=item there are overrides to the mixing rules for i,j nonbonded parameters
-from the "NBFIX" section in the parameter stream files (e.g. for ions),
-make sure that the LAMMPS output data is correct for ions with NBFIX overrides
+=item There are overrides to the mixing rules for i, j non-bonded parameters
+from the "NBFIX" section in the parameter stream files (e.g. CHARMM for ions).
+Make sure that the parametrized LAMMPS data file is defined in the way you
+intended before running serious molecular dynamics simulations with LAMMPS.
 
 =back
 
@@ -763,7 +757,7 @@ Temple University
 
 =over
 
-=item Version 1.0
+=item Version 0.1
 
 =item For more details cf. `git rev-parse HEAD`.
 
