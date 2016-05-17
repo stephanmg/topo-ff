@@ -705,12 +705,10 @@ two OUTPUT files (with suffixes .data and .in).
 
 =over
 
-=item a) handle NBFIX terms, mixing i,j for LJ potential (for CHARMM22 probably nothing to do for now...)
-
-=item b) correct TIP3P potentials for LAMMPS (special LJ potentials):
+=item a) correct TIP3P potentials for LAMMPS (special LJ potentials):
 L<Parameters|http://lammps.sandia.gov/doc/Section_howto.html#howto-7>
 
-=item c) perl test cases and cleanup code
+=item b) perl test cases and cleanup code
 
 =back
 
@@ -733,6 +731,15 @@ by the pair_coeff command but applied in the dihedral section)
 The last parameter for the dihedral_coeff (weighting) needs
 to be adjusted, cf. comments in the code and the LAMMPS documentation
 L<Parameters|http://lammps.sandia.gov/doc/dihedral_charmm.html>
+
+=item in CHARMM impropers are defined from the topology files. topotools
+just guesses them for structures that look like they might be
+requiring them to stay planar. make sure that the impropers are defined
+correctly before using topo-ff.pl.
+
+=item there are overrides to the mixing rules for i,j nonbonded parameters
+from the "NBFIX" section in the parameter stream files (e.g. for ions),
+make sure that the LAMMPS output data is correct for ions with NBFIX overrides
 
 =back
 
