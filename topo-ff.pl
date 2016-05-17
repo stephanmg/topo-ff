@@ -697,7 +697,7 @@ topo-ff --topology TOP --ff FF --output OUT [--verbose] [--no-angles] [--no-dihe
 
 Parametrize the TOPOLOGY file for LAMMPS generated with 
 the VMD plugin 'topotools' with a given CHARMM force field,
-i.e. use the provided CHARMM topology (and parameter) file,
+i.e. use the provided CHARMM parameter file,
 then write the completed LAMMPS data and run script to 
 two OUTPUT files (with suffixes .data and .in).
 
@@ -721,10 +721,6 @@ L<Parameters|http://lammps.sandia.gov/doc/Section_howto.html#howto-7>
 =item Parameters in CHARMM file cannot be separated by empty lines,
 they have the meaning to separate the different sections.
 
-=item When generating a PSF/PDB file pair with VMD for instance,
-the provided topology file (CHARMM) should match the 
-provided parameter file (CHARMM) when using topo-ff.
-
 =item When using 'topotools' then you need to retypebonds,
 retypeangles, retypedihedrals and retypeimpropers,
 then write the LAMMPS data with writelammpsdata.
@@ -737,9 +733,6 @@ by the pair_coeff command but applied in the dihedral section)
 The last parameter for the dihedral_coeff (weighting) needs
 to be adjusted, cf. comments in the code and the LAMMPS documentation
 L<Parameters|http://lammps.sandia.gov/doc/dihedral_charmm.html>
-
-=item an intermediate data file is writte where the dihedral_coeffs
-have not been corrected.
 
 =back
 
