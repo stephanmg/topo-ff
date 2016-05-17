@@ -7,6 +7,7 @@ use strict;
 use warnings;
 use Getopt::Long;
 use Pod::Usage;
+use File::Copy qw(copy);
 use constant VERSION => "1.0";
 
 # CLI
@@ -459,7 +460,7 @@ sub print_entities_info {
     print scalar @$entity . "\t \n";
 }
 
-# correct written files
+# correct dihedral weighting parameter
 sub correct_dihedral_screening {
     # open input and output files
     open (my $IN, "<:encoding(UTF-8)", "${output}.tmp")
@@ -473,11 +474,13 @@ sub correct_dihedral_screening {
     my @dihedral_coeffs;
     my @angles;
     my @angle_coeffs;
+    my @atoms;
 
     my %types = ( "Dihedrals"       => \@dihedrals,
                   "Dihedral Coeffs" => \@dihedral_coeffs,
                   "Angles"          => \@angles,
-                  "Angle Coeffs"    => \@angle_coeffs 
+                  "Angle Coeffs"    => \@angle_coeffs,
+                  "Atoms"           => \@atoms,
                 );
 
     # internal statistics (angle and dihedrals w coefficients during correction)
@@ -493,7 +496,7 @@ sub correct_dihedral_screening {
     }
 
     if ($verbose) {
-        print "*******************************************\n";
+        print "*******************************************\n\n";
     }
 
     # correct the dihedral coefficients
@@ -575,9 +578,64 @@ sub correct_dihedral_screening {
     }
     close($OUT);
     close($IN);
+    
+    return @atoms;
 }
 
-correct_dihedral_screening();
+# correct bounding box coordinates
+sub correct_bounding_box {
+    # open input and output files
+    open (my $IN, "<:encoding(UTF-8)", "${output}.data")
+    or die "Could not open output file '$output': $!";
+
+    open (my $OUT, ">:encoding(UTF-8)", "${output}.tmp")
+    or die "Could not open output file '$output': $!";
+
+    my $atoms = shift;
+    my @x;
+    my @y;
+    my @z;
+    for my $atom (@$atoms) {
+        my @cols = split " ", $atom;
+        push @x, $cols[4];
+        push @y, $cols[5];
+        push @z, $cols[6];
+    }
+
+    my @xsorted = sort { $a <=> $b } @x;
+    my @ysorted = sort { $a <=> $b } @y;
+    my @zsorted = sort { $a <=> $b } @z;
+
+    if ($verbose) {
+       print "Bounding Box dimensions:\n";
+       print "*******************************************\n";
+       print "x min: " . $xsorted[0] . " | x max: " . $xsorted[-1] . "\n";
+       print "y min: " . $ysorted[0] . " | y may: " . $ysorted[-1] . "\n";
+       print "z min: " . $zsorted[0] . " | z maz: " . $zsorted[-1] . "\n";
+       print "*******************************************\n";
+    }
+
+    # write bounding box
+    while (my $line = <$IN>) {
+        if ($line =~ /^.*?xlo\s*xhi$/) {
+            print $OUT " $xsorted[0] $xsorted[-1] xlo xhi\n";
+        } elsif ($line =~ /^.*?ylo\s*yhi$/) {
+            print $OUT " $ysorted[0] $ysorted[-1] ylo yhi\n";
+        } elsif ($line =~ /^.*?zlo\s*zhi$/) {
+            print $OUT " $zsorted[0] $zsorted[-1] zlo zhi\n";
+        } else {
+            print $OUT $line;
+        }
+    }
+
+    close ($OUT);
+    close ($IN);
+    copy "${output}.tmp", "${output}.data";
+}
+
+my @atoms = correct_dihedral_screening;
+correct_bounding_box \@atoms;
+
 
 __END__
 
@@ -652,15 +710,7 @@ two OUTPUT files (with suffixes .data and .in).
 =item b) correct TIP3P potentials for LAMMPS (special LJ potentials):
 L<Parameters|http://lammps.sandia.gov/doc/Section_howto.html#howto-7>
 
-=item c) correct bounding box coordinates given by 'topotools' maybe
-
-=item d) update masses from CHARMM parameter file ('topotools' provides 
-us already with the correct masses)) instead of 'topotools' provided
-values
-
-=item e) perl test cases for some structures
-
-=item f) cleanup code
+=item c) perl test cases and cleanup code
 
 =back
 
