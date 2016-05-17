@@ -1,6 +1,5 @@
 #!/usr/bin/env perl
 ## topo-ff - Parametrize a LAMMPS data file with a CHARMM force field
-# TODO test cases and code cleanup
 
 use 5.000;
 use utf8;
