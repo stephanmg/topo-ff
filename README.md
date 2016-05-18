@@ -3,10 +3,12 @@ Parametrize a LAMMPS data file with a CHARMM force field
 
 ## Usage
 
-Create a PSF/PDB for a PDB file from the Protein Data Base.
-Afterwards write out LAMMPS data file with the VMD plugin
-'topotools'. Get the CHARMM22 parameter file, then invoke
-topo-ff by:
+Create a PSF/PDB pair with [VMD](www.ks.uiuc.edu/Research/vmd/)
+starting from a single PDB file obtained from the [Protein Data Base](http://www.pdb.org). 
+Next write out [LAMMPS](http://www.lammps.sandia.gov) 
+datafile with the VMD plugin  'topotools'. 
+Get the [CHARMM](http://mackerell.umaryland.edu/charmm_ff.shtml) parameter file, 
+then invoke topo-ff by:
 
 ```
 ./topo-ff.pl
